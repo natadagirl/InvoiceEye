@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="68 131 253 205" role="img" aria-label="InvoiceEye telescope">
+  <style>
+    svg { --stand:#1e2a38; --rim:#175e3e; --area:#e9f2ef }
+    #dark:target ~ g { --stand:#c8d6dc; --rim:#50c28c; --area:#203b3c }
+    @media (prefers-color-scheme:dark) {
+      svg:not(:has(:target)) { --stand:#c8d6dc; --rim:#50c28c; --area:#203b3c }
+    }
+  </style>
+  <g id="light"/><g id="dark"/>
+  <g>
+    <path fill="var(--area)" d="m82 305 37-17 34 6 45-29 38 14 66-82v128H82z"/>
+    <path d="m82 305 37-17 34 6 45-29 38 14 66-82" fill="none" stroke="#f28c28" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="302" cy="197" r="12" fill="#f28c28"/>
+    <path d="m154 292 21-81 23 54" fill="none" stroke="var(--stand)" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+    <g transform="rotate(-30 175 211)">
+      <rect x="94" y="201" width="34" height="22" rx="4" fill="var(--stand)"/>
+      <rect x="119" y="188" width="78" height="43" rx="8" fill="#1f7a4e"/>
+      <rect x="184" y="181" width="65" height="56" rx="8" fill="#1f7a4e"/>
+      <rect x="242" y="176" width="13" height="70" rx="5" fill="var(--rim)"/>
+    </g>
+    <circle cx="175" cy="211" r="10" fill="var(--stand)"/>
+  </g>
+</svg>

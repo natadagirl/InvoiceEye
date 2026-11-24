@@ -4,10 +4,9 @@ import {db} from '../services/supabase'
 import {loadInvoices} from '../services/purchasing'
 import {WorkspaceContext} from '../services/analytics'
 import type {Restaurant,Invoice} from '../types'
-import {Icon} from './Icon'
 
 function Frame({children}:{children:ReactNode}){
- return <div className="access"><div className="panel"><div className="brand"><span className="brandMark"><Icon name="eye"/></span>InvoiceEye</div>{children}</div></div>
+ return <div className="access"><div className="panel"><div className="brand"><img className="brandMark" src="/invoiceeye.svg#light" alt=""/><span className="brandName">Invoice<span>Eye</span></span></div>{children}</div></div>
 }
 function Auth({recover,done}:{recover:boolean;done:()=>void}){
  const [mode,setMode]=useState<'login'|'signup'|'reset'>('login'),[email,setEmail]=useState(''),[password,setPassword]=useState('')
