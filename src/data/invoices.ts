@@ -1,4 +1,4 @@
-import type { Invoice } from '../types'
+// Historical Phase 1 fixture. The application reads live records through purchasing.ts.
 
 export const months = ['2026-06','2026-07','2026-08','2026-09','2026-10','2026-11']
 export const suppliers = ['Greenfield Produce','Meadowbrook Dairy','Northstar Meats','Heritage Pantry','Summit Coffee']
@@ -12,7 +12,7 @@ const catalogue: Item[][] = [
   [['Espresso beans','kg',18,[19,19.2,19.1,19.5,20.0,20.4]],['Decaf beans','kg',6,[21,21.2,21,21.3,21.2,21.5]]]
 ]
 const volume = [1,1.12,1.04,1.22,1.16,1.32]
-export const invoices:Invoice[] = months.flatMap((month,m)=>Array.from({length:15},(_,i)=>{
+export const invoices = months.flatMap((month,m)=>Array.from({length:15},(_,i)=>{
   const s=i%5
   return {id:'INV-'+(1001+m*15+i),date:month+'-'+String(i+2).padStart(2,'0'),supplier:suppliers[s],
     status:m===5 && i>=12?'Pending' as const:'Paid' as const,
