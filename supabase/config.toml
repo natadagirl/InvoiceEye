@@ -431,3 +431,7 @@ enabled = true
 [functions.extract-invoice]
 # Auth is verified via Auth.getUser inside the handler for asymmetric signing keys.
 verify_jwt = false
+
+[functions.generate-analysis]
+# The handler verifies the access token with Supabase Auth on every POST.
+verify_jwt = false

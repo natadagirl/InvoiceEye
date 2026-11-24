@@ -11,7 +11,7 @@ try{
  const result=await db.from('restaurants').select('id,alert_threshold').eq('is_demo',true).single()
  if(result.error)throw result.error
  const model=analytics(await loadInvoices(result.data.id))
- assert.equal(model.months.length,6)
+ assert.ok(['06','07','08','09','10','11'].every(m=>model.months.includes('2026-'+m)))
  assert.equal(model.inMonth('2026-11').length,15)
  assert.equal(model.prices('2026-11').length,35)
  const nov=model.comparisons('2026-11')

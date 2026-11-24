@@ -1,11 +1,17 @@
 import {useEffect,useRef,useState} from 'react'
 import {db} from '../services/supabase'
 import {useWorkspace} from '../services/analytics'
-import {emptyDraft,emptyItem,headerText,headerNumbers,itemText,itemNumbers,isDraft,problems,type Draft,type Item} from '../../supabase/functions/extract-invoice/format'
+import {emptyDraft,emptyItem,headerText,headerNumbers,itemNumbers,isDraft,problems,type Draft,type Item} from '../../supabase/functions/extract-invoice/format'
 
 type Product={id:string;name:string;specification:string;base_unit:string}
 type Props={id:string;path:string;onClose:()=>void}
 const names:Record<string,string>={supplier:'Supplier',number:'Invoice number',date:'Invoice date',currency:'Currency',subtotal:'Subtotal',tax:'Tax',discounts:'Discounts',total:'Total',name:'Product name',description:'Description',quantity:'Quantity',unit:'Purchased unit',packageSize:'Pack size',packageUnit:'Base unit',unitPrice:'Unit price',lineTotal:'Line total'}
+function AmountField({value,onChange,label}:{value:number|null;onChange:(v:number|null)=>void;label:string}){
+ const [editing,setEditing]=useState<string|null>(null)
+ return <input aria-label={label} type="number" step="any" value={editing??(value===null?'':value.toFixed(2))}
+ onFocus={()=>setEditing(value===null?'':String(value))} onBlur={()=>setEditing(null)}
+ onChange={e=>{setEditing(e.target.value);onChange(e.target.value===''?null:Number(e.target.value))}}/>
+}
 export function Review({id,path,onClose}:Props){
  const {restaurant,refresh}=useWorkspace()
  const dialog=useRef<HTMLDialogElement>(null)
@@ -32,6 +38,7 @@ export function Review({id,path,onClose}:Props){
   load().catch(e=>{if(alive)setError(e.message)}).finally(()=>{if(alive)setBusy('')})
   return ()=>{alive=false;if(url)URL.revokeObjectURL(url)}
  },[id,path,restaurant.id])
+ useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue=''};window.addEventListener('beforeunload',warn);return ()=>window.removeEventListener('beforeunload',warn)},[dirty])
  function change(next:Draft){setDraft(next);setDirty(true)}
  function line(index:number,patch:Partial<Item>){change({...draft,items:draft.items.map((i,k)=>k===index?{...i,...patch}:i)})}
  function close(){if(!busy&&(!dirty||window.confirm('Close and lose your unsaved edits?')))onClose()}
@@ -63,20 +70,26 @@ export function Review({id,path,onClose}:Props){
  const editable=['awaiting_review','failed'].includes(status)
  return <dialog className="review" ref={dialog} aria-labelledby="review-heading" onCancel={e=>{e.preventDefault();close()}}>
   <div className="panelHead"><div><h2 id="review-heading">Review invoice</h2><p>{status.replaceAll('_',' ')} · {restaurant.name}</p></div><button disabled={!!busy} onClick={close}>Close</button></div>
-  {preview&&<details open={!editable}><summary>Original invoice</summary>{path.endsWith('.pdf')?<iframe title="Original PDF" src={preview}/>:<img alt="Original supplier invoice" src={preview}/>}<a href={preview} download={path.split('/').pop()}>Download original</a></details>}
+  <div className="reviewBody"><div className="originalPane">{preview&&<details open><summary>Original invoice</summary>{path.endsWith('.pdf')?<iframe title="Original PDF" src={preview}/>:<img alt="Original supplier invoice" src={preview}/>}<a href={preview} download={path.split('/').pop()}>Download original</a></details>}</div><div className="editPane">
   <div className="reviewActions"><button disabled={!!busy} onClick={()=>run('extract')}>{editable||status==='processing'?'Retry extraction':'Extract with Gemini'}</button><span role="status">{busy}</span></div>
   {error&&<p className="reviewError" role="alert">{error}</p>}
   {editable&&<fieldset disabled={!!busy}><legend>Invoice details</legend>
    <datalist id="supplier-options">{suppliers.map(s=><option key={s}>{s}</option>)}</datalist>
-   <div className="reviewFields">{[...headerText,...headerNumbers].map(k=><label key={k}>{names[k]}<input type={k==='date'?'date':headerNumbers.some(n=>n===k)?'number':'text'} step="any" list={k==='supplier'?'supplier-options':undefined} value={draft[k]??''} onChange={e=>change({...draft,[k]:e.target.value===''?null:headerNumbers.some(n=>n===k)?Number(e.target.value):e.target.value})}/></label>)}</div>
-   <h3>Line items</h3><p>Choose a standardized ingredient and verify the base units per pack before including a price in trends.</p>
-   <div className="tableScroll"><table><thead><tr>{[...itemText,...itemNumbers].map(k=><th key={k}>{names[k]}</th>)}<th>Ingredient match</th><th/></tr></thead><tbody>{draft.items.map((i,index)=>{
+   <div className="reviewFields">{headerText.map(k=><label key={k}>{names[k]}<input type={k==='date'?'date':'text'} list={k==='supplier'?'supplier-options':undefined} value={draft[k]??''} onChange={e=>change({...draft,[k]:e.target.value||null})}/></label>)}{headerNumbers.map(k=><label key={k}>{names[k]}<AmountField label={names[k]} value={draft[k]} onChange={v=>change({...draft,[k]:v})}/></label>)}</div>
+   <h3>Line items</h3><p>Verify each match and the base units per purchased pack.</p>
+   {draft.items.map((i,index)=>{
     const suggested=products.filter(p=>i.name?.toLowerCase().includes(p.name.toLowerCase()))
-    return <tr key={index}>{[...itemText,...itemNumbers].map(k=><td key={k}><input aria-label={names[k]+' row '+(index+1)} type={itemNumbers.some(n=>n===k)?'number':'text'} step="any" value={i[k]??''} onChange={e=>line(index,{[k]:e.target.value===''?null:itemNumbers.some(n=>n===k)?Number(e.target.value):e.target.value})}/></td>)}<td><select aria-label={'Ingredient match row '+(index+1)} value={i.ingredientId??''} onChange={e=>line(index,{ingredientId:e.target.value})}><option value="">Leave unmatched</option>{products.map(p=><option key={p.id} value={p.id}>{suggested.includes(p)?'Suggested · ':''}{p.name} · {p.specification} / {p.base_unit}</option>)}</select>{suggested.length>0&&!i.ingredientId&&<small>Suggested: {suggested.map(p=>p.name).join(', ')}</small>}</td><td><button onClick={()=>change({...draft,items:draft.items.filter((_,n)=>n!==index)})}>Remove</button></td></tr>
-   })}</tbody></table></div><button className="outline" onClick={()=>change({...draft,items:[...draft.items,emptyItem()]})}>Add line item</button>
+    return <section className="reviewLine" key={index}><div className="lineTop"><h3>Line {index+1}</h3><button onClick={()=>change({...draft,items:draft.items.filter((_,n)=>n!==index)})}>Remove</button></div>
+    <label>Product name<textarea value={i.name??''} rows={2} onChange={e=>line(index,{name:e.target.value||null})}/></label>
+    <label>Ingredient match<select aria-label={'Ingredient match row '+(index+1)} value={i.ingredientId??''} onChange={e=>line(index,{ingredientId:e.target.value})}><option value="">Leave unmatched</option>{products.map(p=><option key={p.id} value={p.id}>{p.name} · {p.specification} / {p.base_unit}</option>)}</select></label>
+    {suggested.filter(p=>p.id!==i.ingredientId).map(p=><button key={p.id} className="suggestion" onClick={()=>line(index,{ingredientId:p.id})}>Use {p.name} · {p.specification} / {p.base_unit}</button>)}
+    <label>Description<textarea rows={2} value={i.description??''} onChange={e=>line(index,{description:e.target.value||null})}/></label>
+    <div className="reviewFields">{(['unit','packageUnit'] as const).map(k=><label key={k}>{names[k]}<input value={i[k]??''} onChange={e=>line(index,{[k]:e.target.value||null})}/></label>)}
+    {itemNumbers.map(k=><label key={k}>{names[k]}{k==='lineTotal'||k==='unitPrice'?<AmountField label={names[k]+' row '+(index+1)} value={i[k]} onChange={v=>line(index,{[k]:v})}/>:<input type="number" step="any" value={i[k]??''} onChange={e=>line(index,{[k]:e.target.value===''?null:Number(e.target.value)})}/>}</label>)}</div>
+    </section>})}<button className="outline" onClick={()=>change({...draft,items:[...draft.items,emptyItem()]})}>Add line item</button>
    {draft.warnings.length>0&&<div className="reviewNotes"><strong>Extractor notes</strong>{draft.warnings.map((s,i)=><p key={i}>{s}</p>)}</div>}
    {issues.length>0&&<div className="reviewNotes"><strong>Before confirmation</strong>{issues.map(s=><p key={s}>{s}</p>)}</div>}
-   </fieldset>}
-   <div className="reviewActions"><button disabled={!!busy} onClick={()=>run('discard')}>Discard draft</button>{editable&&<button className="primary" disabled={!!busy||issues.length>0} onClick={()=>run('confirm')}>Confirm and save</button>}</div>
+   </fieldset>}</div></div>
+   <div className="reviewActions reviewFooter"><button disabled={!!busy} onClick={()=>run('discard')}>Discard draft</button>{editable&&<button className="primary" disabled={!!busy||issues.length>0} onClick={()=>run('confirm')}>Confirm and save</button>}</div>
  </dialog>
 }

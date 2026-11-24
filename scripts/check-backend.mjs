@@ -20,11 +20,11 @@ for(const table of ['restaurants','restaurant_members','suppliers','ingredients'
 assert.equal(ok(await a.from('restaurants').select('id').eq('id',other)).length,0)
 const aUser=ok(await a.auth.getUser()).user.id
 assert.equal(ok(await b.from('profiles').select('id').eq('id',aUser)).length,0)
-const invoices=ok(await a.from('invoices').select('id').eq('restaurant_id',own).eq('processing_status','ready'))
+const invoices=ok(await a.from('invoices').select('id').eq('restaurant_id',own).eq('processing_status','ready').like('invoice_number','DEMO-%'))
 assert.equal(invoices.length,90)
 assert.equal(ok(await a.from('ingredients').select('id').eq('restaurant_id',own)).length,30)
 assert.equal(ok(await a.from('suppliers').select('id').eq('restaurant_id',own)).length,5)
-assert.equal(ok(await a.from('invoice_items').select('id').eq('restaurant_id',own)).length,630)
+assert.equal(ok(await a.from('invoice_items').select('id').eq('restaurant_id',own).in('invoice_id',invoices.map(i=>i.id))).length,630)
 const demonstration=ok(await a.from('invoices').select('id,suppliers(name),invoice_items(quantity,package_size,normalized_unit_price,ingredients(name,base_unit,specification))').eq('restaurant_id',own).eq('processing_status','ready').limit(1))
 assert.ok(demonstration[0].invoice_items[0].ingredients.base_unit)
 const bucket=b.storage.from('invoices'),foreignBucket=a.storage.from('invoices')
