@@ -1,19 +1,23 @@
+import {Review} from './Review'
 import {useState} from 'react'
 import {db} from '../services/supabase'
 import {useWorkspace} from '../services/analytics'
 export function Upload(){
  const {restaurant,refresh}=useWorkspace()
  const [busy,setBusy]=useState(false),[error,setError]=useState('')
+ const [review,setReview]=useState<{id:string;path:string}|null>(null)
  async function upload(file:File){
+  if(busy||review)return
   const ext=file.name.split('.').pop()?.toLowerCase()
   if(!ext||!['pdf','jpg','jpeg','png'].includes(ext)||!['application/pdf','image/jpeg','image/png'].includes(file.type)||file.size>10485760){setError('Choose a PDF, JPEG or PNG up to 10 MiB.');return}
   setBusy(true);setError('')
-  try{const result=await db!.storage.from('invoices').upload(restaurant.id+'/'+crypto.randomUUID()+'.'+ext,file,{cacheControl:'0'})
+  try{const id=crypto.randomUUID();const path=restaurant.id+'/'+id+'.'+ext
+   const result=await db!.storage.from('invoices').upload(path,file,{cacheControl:'0'})
    if(result.error)throw result.error
-   refresh()
+   setReview({id,path})
   }catch(e){setError(e instanceof Error?e.message:'Upload failed.')}finally{setBusy(false)}
  }
- return <div className="setting"><label>{busy?'Uploading…':'Upload an invoice'} <input type="file" accept=".pdf,.jpg,.jpeg,.png" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void upload(file)}}/></label>{error&&<p role="alert">{error}</p>}</div>
+ return <><div className="uploadZone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(file)void upload(file)}}><label>Drop a PDF, JPEG or PNG here (up to 10 MiB), or {busy?'Uploading…':'Upload an invoice'} <input type="file" accept=".pdf,.jpg,.jpeg,.png" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void upload(file)}}/></label>{error&&<p role="alert">{error}</p>}</div><div className="samples">Synthetic samples: <a download href="/samples/normal.pdf">Standard PDF</a> · <a download href="/samples/increase.png">Price increase PNG</a> · <a download href="/samples/incomplete.jpg">Incomplete JPEG</a></div>{review&&<Review {...review} onClose={()=>{setReview(null);refresh()}}/>}</>
 }
 export function FileActions({path}:{path:string}){
  const {refresh}=useWorkspace(),[error,setError]=useState(''),[busy,setBusy]=useState(false)
