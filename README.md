@@ -8,11 +8,11 @@ Use Node.js 22.12 or later. Install dependencies with `npm install`. Copy `.env.
 
 Run `npm run dev` and open the URL printed by Vite. Run `npm run lint`, `npm test`, and `npm run build` for local verification. The built SPA uses browser history routing, so any future static host must serve index.html for application routes.
 
-In the hosted project's Auth settings, enable the Email provider and configure the Site URL and allowed redirects for the exact frontend origin, including the root confirmation callback and `/reset-password`. For local development use a consistent hostname and port. Configure SMTP for sign-up confirmations and recovery messages to real users. The linked CLI configuration does not automatically change hosted Auth settings.
+In the hosted project's Auth settings, enable the Email provider and configure the Site URL and allowed redirects for the exact frontend origin, including `/auth/callback` and `/reset-password`. For local development use a consistent hostname and port. Use the gated Resend rollout in docs/CLOUDFLARE_AND_EMAIL.md for confirmations and recovery. The linked CLI configuration does not automatically change hosted Auth settings.
 
 ## Data and access
 
-The browser uses `src/services/supabase.ts`. The Access component restores sessions, handles login, signup and password recovery, and loads RLS-filtered restaurant memberships. New users create a restaurant through an atomic onboarding RPC. Users with multiple restaurants can switch workspaces. Only owners can save alert thresholds.
+The browser uses `src/services/supabase.ts`. The Access component restores sessions, handles login, signup and password recovery, and loads RLS-filtered restaurant memberships. New users create a restaurant through an atomic onboarding RPC. Users with multiple restaurants can switch workspaces. Owners can edit the restaurant name, price threshold and in-app alert switch. Members can edit their own display name and password.
 
 The purchasing service pages through invoices and items in the selected restaurant. The dashboard totals ready CAD invoices including tax. Price analysis uses only standardized ready CAD lines, grouped by supplier and ingredient identity. Ingredient identity includes specification and base unit. Package size means base units per purchased unit. The tracker weights normalized unit prices by purchased base quantity, and compares consecutive calendar months. Missing or zero baselines yield no percentage. Other currencies remain visible on invoices, outside CAD analytics.
 
@@ -105,7 +105,7 @@ Gemini uses the existing server-side `geminiapi` secret and Flash model discover
 
 ### Coverage and limits
 
-- Queries support a reporting window up to twelve calendar months, a separate historical comparison month, and at most twelve displayed result rows. Catalog context covers up to 250 ingredients and 100 suppliers. Large restaurant catalogs and long conversations need pagination and relevance retrieval.
+- Queries support a reporting window up to twelve calendar months, a separate historical comparison month, and at most twelve displayed result rows. Name search retrieves bounded matches from the tenant catalog. The scope editor pages ten matches at a time and can rerun a saved question with exact dates, supplier and ingredient. A corrected run retains the original turn.
 - Recorded expenditure includes confirmed CAD invoice tax and discounts. Unit-price analysis uses matched, standardized supplier/ingredient lines and comparable base units. The assistant excludes invoices later than the Edmonton business date. A saved Insights report retains its own historical coverage rules and may include future-dated records.
 - Historical scenarios apply the baseline supplier/product price to ending-period purchased quantities. Supply availability, freight, sales, menu profitability and market quotes require additional evidence. Language interpretation can select an unintended product or period. Check the reporting dates and source records, or restate the question.
 - One active request and 30 attempts per hour are allowed per user and restaurant. Interruptions expire after three minutes. A provider outage can delay a new response. Completed history remains readable. A failed turn is retryable from the composer. Unsent drafts are held in memory.
@@ -114,4 +114,12 @@ Gemini uses the existing server-side `geminiapi` secret and Flash model discover
 
 Run `npm test`, `npm run lint` and `npm run build` (includes frontend TypeScript). Run `deno check supabase/functions/chat-assistant/index.ts` and `deno test --allow-env scripts/*_test.ts` for worker types and offline failure/retry tests. The opt-in live check `node --env-file=.env.local --env-file=.env.fixtures scripts/check-assistant.mjs` creates a private synthetic test conversation, calls Gemini, independently checks the answer and follow-up, and verifies cross-restaurant denial. It retains the verification thread. The SQL ownership test in `supabase/tests/assistant_ownership_rollback.sql` exercises two members in one workspace and rolls back its fixture changes.
 
-Production schema changes require approval. Deploy the approved worker with `supabase functions deploy chat-assistant --remote=zvvhoamgmkvgzuccufmk --use-api`. Netlify reads `netlify.toml` for the Vite build, dist directory and SPA fallback. Configure the public Supabase URL/key and allowed Supabase Auth callback origins when connecting a site. Gemini and fixture credentials belong outside Netlify's browser build.
+Production schema changes require approval. Deploy the approved worker with `supabase functions deploy chat-assistant --remote=zvvhoamgmkvgzuccufmk --use-api`. Cloudflare Pages builds the frontend from main. See the deployment and authentication guide below.
+
+## Account settings, notifications and hosting
+
+Open the restaurant identity in the sidebar for My account, Restaurant settings, Notification preferences and Log out. Reporting currency is CAD and reporting time uses America/Edmonton. The bell shows comparable confirmed price increases and links to their price histories. Each user has personal read receipts for a restaurant, month, supplier and ingredient. Reopening the page reuses the same receipt. Owners control the restaurant threshold and in-app alert switch.
+
+The `20261125000200_account_settings.sql` and `20261125000300_alert_preferences.sql` migrations add column-level permissions, an owner-controlled alert preference and membership-scoped receipts. Use `supabase/tests/settings_rollback.sql` for a rollback-only policy check. The opt-in `scripts/check-context.mjs` uses the existing fixture login environment and adds a synthetic verification thread. `scripts/check-settings-browser.mjs` runs against a local frontend using an installed Playwright module, optional CHROME_BIN, and the ignored fixture environment. It intercepts restaurant edits, password updates, notification writes and test email requests. The separate `scripts/check-auth-browser.mjs` verifies successful callbacks, recovery and unverified-user handling with simulated Auth responses.
+
+[Cloudflare Pages and Resend setup](docs/CLOUDFLARE_AND_EMAIL.md) covers the custom domain, callback allowlist, DNS, SMTP, templates and mailbox acceptance checks.
