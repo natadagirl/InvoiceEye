@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "oxlint src scripts supabase/functions",
-    "test": "node --experimental-strip-types scripts/test-analytics.mjs && node --experimental-strip-types scripts/test-invoice-format.mjs && node --experimental-strip-types scripts/test-business-metrics.mjs"
+    "test": "node --experimental-strip-types scripts/test-analytics.mjs && node --experimental-strip-types scripts/test-invoice-format.mjs && node --experimental-strip-types scripts/test-business-metrics.mjs && node --experimental-strip-types scripts/test-assistant.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",

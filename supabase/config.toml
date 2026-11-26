@@ -435,3 +435,7 @@ verify_jwt = false
 [functions.generate-analysis]
 # The handler verifies the access token with Supabase Auth on every POST.
 verify_jwt = false
+
+[functions.chat-assistant]
+# Every POST verifies the caller with Supabase Auth and owner-scoped RLS.
+verify_jwt = false
