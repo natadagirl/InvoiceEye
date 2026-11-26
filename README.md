@@ -140,3 +140,5 @@ The approved source is `public/invoiceeye-email-logo-v2.png`. The app uses cropp
 | `--border` | Soft Border `#DCE5DE` |
 
 The project owner manually verified production Resend delivery, signup confirmation, password recovery and the branded email logo in Gmail. My account shows the registered email and verification status and supports password changes.
+
+The production Confirm signup and Reset password HTML is recorded in `supabase/templates/` as supplied by the owner. Both templates use `{{ .ConfirmationURL }}` and the tested logo URL with `?v=3`.

@@ -21,4 +21,4 @@ Hosted confirmation and recovery templates use `{{ .ConfirmationURL }}`. Their l
 
 For reference, Resend uses `smtp.resend.com`, port 465 and username `resend`. The sending key is kept in Supabase's private SMTP settings. Cloudflare DNS should retain the domain-verification and sending records issued by Resend. [Resend's Cloudflare DNS guide](https://resend.com/docs/guides/dns/cloudflare) · [Resend's Supabase SMTP guide](https://resend.com/docs/send-with-supabase-smtp)
 
-The HTML files in `supabase/templates/` currently contain the earlier Phase 6 examples. Exact synchronization requires the hosted Confirm signup and Reset password HTML exports.
+The repository copies match the production markup supplied by the owner. Use `supabase/templates/confirmation.html` for Confirm signup and `supabase/templates/recovery.html` for Reset password. The signup template intentionally uses `#20754E` for its button and `#DFE8E1` for its border and divider. The recovery template uses `#1E754D` and `#DCE5DE`.
