@@ -1,11 +1,11 @@
 import {Area,AreaChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis} from 'recharts'
 
 import {periodSpend,today} from '../../supabase/functions/_shared/metrics'
-import {money,useAnalytics,useWorkspace,shortMonth,previousMonth} from '../services/analytics'
+import {money,analytics,useWorkspace,shortMonth,previousMonth} from '../services/analytics'
 import {useState} from 'react'
-export function Trend({month,ingredient}:{month:string;ingredient?:string}){
+export function Trend({month,ingredient,cutoff}:{month:string;ingredient?:string;cutoff?:string|null}){
  const [range,setRange]=useState('6')
- const {prices}=useAnalytics(),{rows}=useWorkspace()
+ const {rows}=useWorkspace(),{prices}=analytics(cutoff?rows.filter(r=>r.date<=cutoff):rows)
  const asOf=today()
  const history=[month];while(history.length<Number(range))history.unshift(previousMonth(history[0]))
  const data=history.map(m=>{

@@ -1,7 +1,236 @@
-.accountRoot{position:relative;margin-top:auto;min-width:0}.accountRoot .restaurant{width:100%;text-align:left;border-radius:7px;padding:13px 5px;margin:5px 0}.restaurant:hover,.restaurant[aria-expanded=true]{background:#2b3d49}.restaurant .avatar{flex:none}.identityText{min-width:0;flex:1}.identityText strong,.accountPop strong,.accountPop small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-.accountPop,.bell .noticeList{position:absolute;z-index:15;border:1px solid var(--border);border-radius:10px;background:white;color:var(--ink);box-shadow:0 6px 22px #11271f26}
-.accountPop{bottom:100%;left:0;width:min(260px,calc(100vw - 32px));padding:10px;max-height:65dvh;overflow:auto}.accountPop small{color:var(--muted);margin-bottom:8px}.accountPop a,.logoutRow{display:flex;align-items:center;gap:8px;padding:9px 6px;border-radius:5px;font-size:14px}.accountPop a:hover{background:var(--green-soft)}.logoutRow{border-top:1px solid var(--border);color:#9d382d}.logoutRow button{flex:1;text-align:left}
-.settingsLayout{max-width:760px;display:grid;gap:16px}.settingsTabs,.noticeTools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.settingsTabs a,.noticeList a,.noticeList article button{color:var(--green);font-size:14px}.settingsTabs a{padding:7px 9px;border-radius:6px}.settingsTabs .selected{background:var(--green-soft);font-weight:650}
-.settingsForm,.noticeList{padding:20px;display:grid;gap:13px}.settingsForm h2,.noticeList h2{font-size:18px;font-weight:650}.settingsForm label{display:grid;gap:5px;font-size:14px}.settingsForm label:has([type=checkbox]){display:flex;align-items:center;gap:8px}.settingsForm input:not([type=checkbox]),.noticeTools input,.contextEditor input{border:1px solid var(--border);border-radius:6px;padding:8px 10px;min-width:0;width:100%}.settingsForm input:read-only{background:var(--canvas)}.settingsForm button{justify-self:start}.settingsForm .primary,.authPrimary,.chatComposer .primary{background:var(--green);color:white;padding:8px 14px;border-radius:7px}.bell{position:relative}.bell>button{display:flex;align-items:center;gap:3px;padding:7px}.bell b{font-size:11px;color:var(--green)}.bell .noticeList{top:100%;right:0;width:min(365px,calc(100vw - 24px));max-height:70dvh;overflow:auto}.noticeList article{border-top:1px solid var(--border);padding-top:9px;display:grid;gap:4px}.noticeList article button{justify-self:start}.noticeList small,.settingsForm small{color:var(--muted)}.noticeTools input{flex:1}.noticeTools h2{margin-right:auto}
-@media(max-width:720px){aside:not(.open){visibility:hidden}aside.open{visibility:visible;z-index:20}aside .navGroup{padding-block:9px}.bell .noticeList{right:-8px}.accountRoot{padding-bottom:env(safe-area-inset-bottom)}}
-@media(max-height:620px){aside{overflow:auto}.accountPop{position:sticky;bottom:0;width:100%}.accountRoot:has(.accountPop){order:-1}.brand{min-height:50px}}
+.accountRoot {
+  position: relative;
+  margin-top: auto;
+  min-width: 0;
+}
+.accountRoot .restaurant {
+  width: 100%;
+  text-align: left;
+  border-radius: 7px;
+  padding: 13px 5px;
+  margin: 5px 0;
+}
+.restaurant:hover,
+.restaurant[aria-expanded=true] {
+  background: #2b3d49;
+}
+.restaurant .avatar {
+  flex: none;
+}
+.identityText {
+  min-width: 0;
+  flex: 1;
+}
+.identityText strong,
+.accountPop strong,
+.accountPop small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.accountPop,
+.bell .noticeList {
+  position: absolute;
+  z-index: 15;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
+  color: var(--ink);
+  box-shadow: 0 6px 22px #11271f26;
+}
+.accountPop {
+  bottom: 100%;
+  left: 0;
+  width: min(260px,calc(100vw - 32px));
+  padding: 10px;
+  max-height: 65dvh;
+  overflow: auto;
+}
+.accountPop small {
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.accountPop a,
+.logoutRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 6px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+.accountPop a:hover {
+  background: var(--green-soft);
+}
+.logoutRow {
+  border-top: 1px solid var(--border);
+  color: #9d382d;
+}
+.logoutRow button {
+  flex: 1;
+  text-align: left;
+}
+.settingsLayout {
+  max-width: 760px;
+  display: grid;
+  gap: 16px;
+}
+.settingsTabs,
+.noticeTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.settingsTabs a,
+.noticeList a,
+.noticeList article button {
+  color: var(--green);
+  font-size: 14px;
+}
+.settingsTabs a {
+  padding: 7px 9px;
+  border-radius: 6px;
+}
+.settingsTabs .selected {
+  background: var(--green-soft);
+  font-weight: 650;
+}
+.settingsForm,
+.noticeList {
+  padding: 20px;
+  display: grid;
+  gap: 13px;
+}
+.settingsForm h2,
+.noticeList h2 {
+  font-size: 18px;
+  font-weight: 650;
+}
+.settingsForm label {
+  display: grid;
+  gap: 5px;
+  font-size: 14px;
+}
+.settingsForm label:has([type=checkbox]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settingsForm input:not([type=checkbox]),
+.noticeTools input,
+.contextEditor input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  min-width: 0;
+  width: 100%;
+}
+.settingsForm input:read-only {
+  background: var(--canvas);
+}
+.settingsForm button {
+  justify-self: start;
+}
+.settingsForm .primary,
+.authPrimary,
+.chatComposer .primary {
+  background: var(--green);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 7px;
+}
+.bell {
+  position: relative;
+}
+.bell > button {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 7px;
+}
+.bell b {
+  font-size: 11px;
+  color: var(--green);
+}
+.bell .noticeList {
+  top: 100%;
+  right: 0;
+  width: min(365px,calc(100vw - 24px));
+  max-height: 70dvh;
+  overflow: auto;
+}
+.noticeList article {
+  border-top: 1px solid var(--border);
+  padding-top: 9px;
+  display: grid;
+  gap: 4px;
+}
+.noticeList article button {
+  justify-self: start;
+}
+.noticeList small,
+.settingsForm small {
+  color: var(--muted);
+}
+.noticeTools input {
+  flex: 1;
+}
+.noticeTools h2 {
+  margin-right: auto;
+}
+@media (max-width:720px) {
+  aside:not(.open) {
+    visibility: hidden;
+  }
+  aside.open {
+    visibility: visible;
+    z-index: 20;
+  }
+  aside .navGroup {
+    padding-block: 9px;
+  }
+  .bell .noticeList {
+    right: -8px;
+  }
+  .accountRoot {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+.sidebarScroll {
+  min-height: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+.accountRoot {
+  flex: none;
+}
+@media (max-width:720px) {
+  .toolbar,
+  .toolbar label,
+  .reportControls,
+  .reportControls label {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .toolbar label,
+  .reportControls label {
+    display: grid;
+    gap: 5px;
+  }
+  .toolbar select,
+  .reportControls select,
+  .analysis > label select {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .analysis > label {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+  }
+  .noticeTools > .outline {
+    white-space: normal;
+  }
+}

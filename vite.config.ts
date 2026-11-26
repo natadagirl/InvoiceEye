@@ -9,6 +9,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           charts: ['recharts'],
+          supabase: ['@supabase/supabase-js'],
           react: ['react', 'react-dom', 'react-router-dom'],
         },
       },
