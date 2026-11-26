@@ -4,10 +4,12 @@ import { useAnalytics, useWorkspace } from '../services/analytics'
 import { db } from '../services/supabase'
 import type { Answer } from '../../supabase/functions/chat-assistant/evidence'
 import './assistant.css'
+import {Icon} from './Icon'
+import {ContextEditor,type Interpretation,type Correction} from './ContextEditor'
 
 type Conversation = { id: string; title: string; updated_at: string }
-type Turn = { id: string; question: string; answer: Answer }
-type Scope = {
+type Turn = { id: string; question: string; answer: Answer;context?:Interpretation }
+type Scope = Partial<Correction> & {
   month?: string
   item?: string
   supplierId?: string
@@ -38,11 +40,11 @@ function Evidence({ answer: a }: { answer: Answer }) {
         </p>
       )}
       <ul>{a.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
-      <div className='chatSources'>
+      {a.sources.length>0&&<details><summary>Sources ({a.sources.length})</summary><div className='chatSources'>
         {a.sources.filter((s) => /^\/(invoices|price-tracker|ai-insights)\?/.test(s.href)).map((s) => (
           <Link key={s.href} to={s.href}>{s.label}</Link>
         ))}
-      </div>
+      </div></details>}
     </div>
   )
 }
@@ -150,7 +152,7 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
     let live = true
     load(true)
     void (async () => {
-      const result = await db!.from('assistant_turns').select('id,question,answer').eq(
+      const result = await db!.from('assistant_turns').select('id,question,answer,context').eq(
         'conversation_id',
         active,
       ).order('created_at')
@@ -180,7 +182,7 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
     if (id) sessionStorage.setItem(storage, id)
     else sessionStorage.removeItem(storage)
   }
-  async function send(text = draft) {
+  async function send(text = draft, correction?:Correction) {
     const question = text.trim()
     if (locked.current || !question) return
     locked.current = true
@@ -200,9 +202,9 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
         sessionStorage.setItem(storage, cid)
         setList((l) => [created.data, ...l])
       }
-      const pending = retry.current?.text === question && retry.current.cid === cid
+      const pending = !correction && retry.current?.text === question && retry.current.cid === cid
         ? retry.current
-        : { id: crypto.randomUUID(), cid, text: question, scope: context?.scope ?? {} }
+        : { id: crypto.randomUUID(), cid, text: question, scope: correction ?? context?.scope ?? {} }
       retry.current = pending
       edit(question)
       const result = await db!.functions.invoke('chat-assistant', {
@@ -263,7 +265,7 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
     >
       {full && (
         <div className={'chatHistory ' + (history ? 'show' : '')}>
-          <button className='primary' disabled={busy} onClick={() => choose('')}>New chat</button>
+          <button className='primary' disabled={busy} onClick={() => choose('')}><Icon name='plus' size={14}/> New chat</button>
           <h2>Conversations</h2>
           {list.map((c) => (
             <button
@@ -272,8 +274,8 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
               className={active === c.id ? 'current' : ''}
               onClick={() => choose(c.id)}
             >
-              {c.title}
-              <small>{new Date(c.updated_at).toLocaleString()}</small>
+              <span className="threadTitle">{c.title}</span>
+              <small>{new Date(c.updated_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}</small>
             </button>
           ))}
         </div>
@@ -286,7 +288,7 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
               <>
                 <button className='mobileHistory' onClick={() => showHistory(!history)}>History</button>
                 {active && (
-                  <>
+                  <details className='conversationActions'><summary aria-label='Conversation actions'>•••</summary>
                     <button
                       disabled={busy}
                       onClick={() => {
@@ -297,7 +299,7 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
                       Rename
                     </button>
                     <button disabled={busy} onClick={() => changeAction('delete')}>Delete</button>
-                  </>
+                  </details>
                 )}
               </>
             )
@@ -353,6 +355,7 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
               <article key={t.id}>
                 <p className='chatQuestion'>{t.question}</p>
                 <Evidence answer={t.answer} />
+                {t.context?.query&&<ContextEditor id={t.id} value={t.context} busy={busy} rerun={v=>void send(t.question,v)}/>}
               </article>
             ))}
           {!turns.length && !loading && !busy && (
@@ -415,7 +418,7 @@ export function Assistant({ month, menu }: { month: string; menu: boolean }) {
                 }
               }}
             />
-            <button className='primary' disabled={busy || !draft.trim()}>Send</button>
+            <button className='primary' disabled={busy || !draft.trim()}><Icon name="send" size={15}/> Send</button>
           </div>
         </form>
       </div>

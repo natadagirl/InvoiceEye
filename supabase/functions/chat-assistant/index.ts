@@ -92,26 +92,30 @@ export async function chat(req: Request) {
     if (typeof month !== 'string' || !/^20\d\d-(0[1-9]|1[0-2])$/.test(month)) {
       throw new Failure(400, 'Invalid reporting month.')
     }
-    const [ingredients, suppliers, prior] = await Promise.all([
-      client.from('ingredients').select('id,name,specification').eq('restaurant_id', rid).order('id').limit(
-        250,
-      ),
-      client.from('suppliers').select('id,name').eq('restaurant_id', rid).order('id').limit(100),
-      client.from('assistant_turns').select('question,context').eq('conversation_id', cid).order(
-        'created_at',
-        { ascending: false },
-      ).limit(4),
-    ])
-    if (!ingredients.data || !suppliers.data || !prior.data) {
-      throw new Failure(503, 'Purchasing context unavailable.')
+    const prior = await client.from('assistant_turns').select('question,context').eq('conversation_id',cid).order('created_at',{ascending:false}).limit(4)
+    if(!prior.data) throw new Failure(503,'Conversation history unavailable.')
+    const correcting = context.turn !== undefined
+    const item = context.item?.split('/'), sid = context.supplierId ?? item?.[0], iid = context.ingredientId ?? item?.[1]
+    if((sid&&!uuid(sid))||(iid&&!uuid(iid))||(correcting&&!uuid(context.turn))) throw new Failure(400,'Invalid selection.')
+    const words = [...new Set(question.toLowerCase().match(/[a-z0-9]{3,}/g)??[])].slice(0,28)
+    async function catalog(table:'ingredients'|'suppliers', selected:string|undefined, key:string){
+      const columns=table==='ingredients'?'id,name,specification,base_unit':'id,name'
+      const base=()=>client.from(table).select(columns).eq('restaurant_id',rid)
+      const ids=[...new Set([selected,...prior.data!.map(t=>t.context[key])].filter(uuid))]
+      const filters=words.map(w=>'name.ilike.*'+w.replace(/oes$/,'o').replace(/s$/,'')+'*')
+      const [matched,pinned]=await Promise.all([filters.length?base().or(filters.join(',')).order('name').order('id').limit(48):Promise.resolve({data:[],error:null}),ids.length?base().in('id',ids):Promise.resolve({data:[],error:null})])
+      if(matched.error||pinned.error)throw new Failure(503,'Catalog unavailable.')
+      type Choice={id:string;name:string;specification?:string;base_unit?:string}
+      const combined=[...pinned.data!,...matched.data!] as unknown as Choice[]
+      return {data:[...new Map(combined.map(row=>[row.id,row])).values()]}
     }
+    const [ingredients,suppliers]=await Promise.all([catalog('ingredients',iid,'ingredientId'),catalog('suppliers',sid,'supplierId')])
     if (
       Object.entries(context).some(([k, v]) =>
-        !['month', 'item', 'supplierId', 'invoice', 'report', 'alerts'].includes(k) ||
+        !['month', 'item', 'supplierId', 'invoice', 'report', 'alerts', 'ingredientId','from','through','turn'].includes(k) ||
         typeof v !== 'string' || v.length > 100
       )
     ) throw new Failure(400, 'Invalid page context.')
-    const item = context.item?.split('/'), sid = context.supplierId ?? item?.[0], iid = item?.[1]
     const ing = ingredients.data.findIndex((x) => x.id === iid),
       sup = suppliers.data.findIndex((x) => x.id === sid)
     if ((context.item && (!iid || !sid || item.length !== 2)) || (iid && ing < 0) || (sid && sup < 0)) {
@@ -130,6 +134,12 @@ export async function chat(req: Request) {
     const reportId = context.report
     if (reportId && !uuid(reportId)) throw new Failure(400, 'Invalid report.')
     const reportQuery = client.from('ai_reports').select('id,report').eq('restaurant_id', rid)
+    let q: Query
+    if(correcting){
+      const source=await client.from('assistant_turns').select('question,context').eq('conversation_id',cid).eq('id',context.turn).maybeSingle()
+      if(!source.data||source.data.question!==question)throw new Failure(403,'Original question unavailable.')
+      q={...source.data.context.query,from:context.from,through:context.through,ingredient:ing,supplier:sup}
+    }else{
     const key = Deno.env.get('geminiapi')
     if (!key) throw new Failure(503, 'Assistant provider is unavailable.')
     const model = await selectModel(key)
@@ -171,7 +181,6 @@ export async function chat(req: Request) {
         maxOutputTokens: 1000,
       },
     })
-    let q: Query
     try {
       q = JSON.parse(
         result.candidates[0].content.parts.filter((p: { thought?: boolean }) => !p.thought).map((
@@ -181,13 +190,14 @@ export async function chat(req: Request) {
     } catch {
       throw new Failure(502, 'The provider returned an unreadable selection. Please retry.')
     }
+    }
     if (!validQuery(q, ingredients.data.length, suppliers.data.length)) {
       throw new Failure(
         422,
         'Unable to resolve the requested period or product. Specify a period of up to twelve months.',
       )
     }
-    if (q.topic === 'concentration') q = { ...q, supplier: -1 }
+    if (!correcting && q.topic === 'concentration') q = { ...q, supplier: -1 }
     if (invoiceDate) q = { ...q, from: invoiceDate, through: invoiceDate }
     let answer: Answer
     if (q.topic === 'report' || reportId) {
@@ -233,7 +243,7 @@ export async function chat(req: Request) {
         rows.push(...await fetchRows(q.baseline + '-01', last.toISOString().slice(0, 10)))
       }
       const named = namedProducts(question, ingredients.data!)
-      const product = named.length > 1 ? named : ingredients.data![q.ingredient]?.id ?? iid
+      const product = !correcting && named.length > 1 ? named : ingredients.data![q.ingredient]?.id ?? iid
       return answerPurchases(rows, q, asOf, product, suppliers.data![q.supplier]?.id ?? sid, context.invoice)
     }
     const done = await worker.rpc('finish_assistant', {
@@ -244,6 +254,8 @@ export async function chat(req: Request) {
         query: q,
         ingredientId: ingredients.data[q.ingredient]?.id ?? iid ?? null,
         supplierId: suppliers.data[q.supplier]?.id ?? sid ?? null,
+        ingredientName: ingredients.data[q.ingredient]?.name ?? null,
+        supplierName: suppliers.data[q.supplier]?.name ?? null,
         invoice: context.invoice ?? null,
         report: reportId ?? null,
       },

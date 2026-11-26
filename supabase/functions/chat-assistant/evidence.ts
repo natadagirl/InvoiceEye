@@ -107,9 +107,9 @@ export function answerPurchases(
     if (!a.sources.some((r) => r.href === href)) a.sources.push({ href, label })
   }
   if (q.topic === 'unsupported' || q.topic === 'report') {
-    a.heading = 'Insufficient evidence'
+    a.heading = 'What purchasing records can tell you'
     a.notes = [
-      'This question needs information outside the available purchasing records. Revenue, profit, market quotes and causes of supplier decisions are unavailable.',
+      'InvoiceEye can calculate purchasing expenditure. Sales, profit, market quotes and supplier decisions require other records. Try asking how your supplier spending changed last month.',
     ]
     return a
   }
