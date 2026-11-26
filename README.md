@@ -90,3 +90,28 @@ Run `npm test`, `npm run lint`, `npm run build`, and `deno test --allow-env scri
 The opt-in `node --env-file=.env.local --env-file=.env.fixtures scripts/check-analysis.mjs` generates one real Gemini report in the synthetic restaurant, verifies its metric snapshot, independently reconciles spend to invoice headers and checks history and cross-restaurant denial. It assumes the confirmed December price-increase sample is present. The fixture credentials were rotated in place. Use the current owner-readable, ignored .env.fixtures for demo sign-in.
 
 The saved verification report covered 91 confirmed CAD invoices dated June 8–December 9, 2026, totaling CAD 71,290.57. Against November, December recorded unit-price increases of 46.4% for carrots and 43.9% for Roma tomatoes. The model selected supplier negotiation for these increases. The recorded December quantities correspond to price effects of CAD 20.60 and CAD 26.07 respectively.
+
+## AI Purchasing Assistant
+
+Open **AI Assistant** in the sidebar or **Ask InvoiceEye** on a workspace page. Both views share the active thread and unsent text while navigating. Completed turns live in Supabase. Refresh reopens the thread in the same tab. History supports reopening, renaming and deleting personal conversations. Enter sends a question and Shift+Enter inserts a line break.
+
+A removable chip shows the page context. Open a confirmed invoice, select an ingredient in Price Tracker, or choose an Insights report to narrow the question. The assistant can show expenditure, monthly spending, supplier concentration, comparable unit prices, volume effects, historical price scenarios and saved report summaries. Every numerical answer uses server-generated tables. Source links open the corresponding purchasing records, price series or report. Recommendations and coverage notes are labeled separately.
+
+### Architecture and security
+
+The browser calls `chat-assistant` with a session, restaurant, conversation, unique request ID, question and optional record context. The Edge Function verifies the access token, looks up the owner's conversation under membership RLS, checks supplied record identifiers, and claims a short-lived lease. The migration `20261125000100_assistant.sql` adds `assistant_conversations`, `assistant_turns` and a private job table. Membership removal cascades to the user's restaurant-specific chat history. Other members of the same restaurant cannot read it. Only constrained worker functions can save completed question/answer pairs. A retry with the same completed request ID returns the existing turn.
+
+Gemini uses the existing server-side `geminiapi` secret and Flash model discovery, optionally pinned by `GEMINI_MODEL`. It receives the question, compact catalog labels, date/context hints and up to four prior questions truncated to 500 characters each with their validated query selections. It selects a validated analytics topic, date range and catalog indexes. Financial records, raw invoice files, provider credentials and navigation URLs are outside that model input. The server resolves the selection through caller-RLS reads and Phase 4 metrics. The UI renders typed text, tables and internal links with React escaping. Model output cannot supply HTML, SQL, business-record updates or arbitrary links.
+
+### Coverage and limits
+
+- Queries support a reporting window up to twelve calendar months, a separate historical comparison month, and at most twelve displayed result rows. Catalog context covers up to 250 ingredients and 100 suppliers. Large restaurant catalogs and long conversations need pagination and relevance retrieval.
+- Recorded expenditure includes confirmed CAD invoice tax and discounts. Unit-price analysis uses matched, standardized supplier/ingredient lines and comparable base units. The assistant excludes invoices later than the Edmonton business date. A saved Insights report retains its own historical coverage rules and may include future-dated records.
+- Historical scenarios apply the baseline supplier/product price to ending-period purchased quantities. Supply availability, freight, sales, menu profitability and market quotes require additional evidence. Language interpretation can select an unintended product or period. Check the reporting dates and source records, or restate the question.
+- One active request and 30 attempts per hour are allowed per user and restaurant. Interruptions expire after three minutes. A provider outage can delay a new response. Completed history remains readable. A failed turn is retryable from the composer. Unsent drafts are held in memory.
+
+### Verification and hosting
+
+Run `npm test`, `npm run lint` and `npm run build` (includes frontend TypeScript). Run `deno check supabase/functions/chat-assistant/index.ts` and `deno test --allow-env scripts/*_test.ts` for worker types and offline failure/retry tests. The opt-in live check `node --env-file=.env.local --env-file=.env.fixtures scripts/check-assistant.mjs` creates a private synthetic test conversation, calls Gemini, independently checks the answer and follow-up, and verifies cross-restaurant denial. It retains the verification thread. The SQL ownership test in `supabase/tests/assistant_ownership_rollback.sql` exercises two members in one workspace and rolls back its fixture changes.
+
+Production schema changes require approval. Deploy the approved worker with `supabase functions deploy chat-assistant --remote=zvvhoamgmkvgzuccufmk --use-api`. Netlify reads `netlify.toml` for the Vite build, dist directory and SPA fallback. Configure the public Supabase URL/key and allowed Supabase Auth callback origins when connecting a site. Gemini and fixture credentials belong outside Netlify's browser build.

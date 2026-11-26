@@ -33,3 +33,11 @@ During original development, two separate synthetic accounts verified tenant iso
 During reconstruction, all five application checkpoints passed the TypeScript and Vite production build. Phase 1 provided no lint or automated test script. Phases 2–4 and the branding checkpoint passed their available npm lint and test scripts. Phase 3 and Phase 4 also passed their offline Deno worker tests using simulated provider failures. Production services were outside the reconstruction test path.
 
 The final application tree was checked against the pre-reconstruction SHA-256 inventory. Future milestones will be committed on main after implementation and testing. The later documentation and hosting-configuration commits are repository preparation performed after the reconstruction.
+
+## Phase 5 · November 25, 2026
+
+Phase 5 began on synchronized main after the seven reconstructed and repository-preparation commits. Development commits use the confirmed repository-local GitHub identity. The additive conversation schema passed a production dry run and transaction-only rehearsal before application. Personal history uses both restaurant membership and user ownership. The new Edge Function delegates question classification to Gemini and keeps financial calculations, source construction and answer rendering deterministic.
+
+The live synthetic test reconciled October 2026 spending to 15 confirmed CAD invoices totaling CAD 12,455.09. A follow-up preserved the reporting period and identified Spruce Market Foods at CAD 4,386.03 (35.2%). A real transient Gemini 503 was observed before a successful retry. Offline worker tests separately exercised quota errors, unsupported model output and lease release. Cross-restaurant reads and invocation were denied. A rolled-back SQL test also denied another member of the same restaurant access to the owner's messages and rename action, and verified owner rename and cascading chat deletion.
+
+Local Chrome verification exercised the floating panel, expansion, unsent text continuity, persisted history after refresh, source navigation, and mobile history at 390 px. The original seven commits remain ancestors of the Phase 5 milestones.
