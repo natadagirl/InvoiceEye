@@ -1,5 +1,6 @@
 import {createContext,useContext,useEffect,useState,type FormEvent,type ReactNode} from 'react'
 import type {Session,User} from '@supabase/supabase-js'
+import {AuthForms,EmailCallback} from './AuthForms'
 import {db} from '../services/supabase'
 import {loadInvoices} from '../services/purchasing'
 import {WorkspaceContext} from '../services/analytics'
@@ -9,22 +10,6 @@ const Identity=createContext<User|null>(null)
 export function useIdentity(){return useContext(Identity)!}
 function Frame({children}:{children:ReactNode}){
  return <div className="access"><div className="panel"><div className="brand"><img className="brandMark" src="/invoiceeye.svg#light" alt=""/><span className="brandName">Invoice<span>Eye</span></span></div>{children}</div></div>
-}
-function Auth({recover,done}:{recover:boolean;done:()=>void}){
- const [mode,setMode]=useState<'login'|'signup'|'reset'>('login'),[email,setEmail]=useState(''),[password,setPassword]=useState('')
- const [busy,setBusy]=useState(false),[message,setMessage]=useState('')
- const title=recover?'Set a new password':({login:'Log in',signup:'Create account',reset:'Reset password'})[mode]
- async function submit(e:FormEvent){
-  e.preventDefault();setBusy(true);setMessage('')
-  try{
-   const auth=db!.auth
-   if(recover){const {error}=await auth.updateUser({password});if(error)throw error;done();return}
-   if(mode==='reset'){const {error}=await auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/reset-password'});if(error)throw error;setMessage('Check your inbox for a password reset link.')}
-   if(mode==='signup'){const {error}=await auth.signUp({email,password,options:{emailRedirectTo:location.origin}});if(error)throw error;setMessage('Check your inbox to confirm your email.')}
-   if(mode==='login'){const {error}=await auth.signInWithPassword({email,password});if(error)throw error}
-  }catch(err){setMessage(err instanceof Error?err.message:'Authentication failed.')}finally{setBusy(false)}
- }
- return <Frame><h2>{title}</h2><form onSubmit={submit}>{!recover&&<label>Email<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label>}{(recover||mode!=='reset')&&<label>Password<input required type="password" minLength={mode==='login'&&!recover?1:8} autoComplete={mode==='login'&&!recover?'current-password':'new-password'} value={password} onChange={e=>setPassword(e.target.value)}/></label>}<button disabled={busy}>{busy?'Please wait…':title}</button></form>{!recover&&<div className="authLinks">{(['login','signup','reset'] as const).filter(m=>m!==mode).map(m=><button key={m} onClick={()=>{setMode(m);setMessage('');setPassword('')}}>{({login:'Log in',signup:'Create account',reset:'Forgot password?'})[m]}</button>)}</div>}<p role="status">{message}</p></Frame>
 }
 function Membership({user,children}:{user:string;children:ReactNode}){
  const [restaurants,setRestaurants]=useState<Restaurant[]|null>(null),[selected,setSelected]=useState(''),[name,setName]=useState('')
@@ -53,10 +38,18 @@ export function SignOut(){
  return <><button onClick={async()=>{const {error}=await db!.auth.signOut({scope:'local'});if(error)setError(error.message)}}>Log out</button>{error&&<span role="alert">{error}</span>}</>
 }
 export function Access({children}:{children:ReactNode}){
- const [session,setSession]=useState<Session|null|undefined>(undefined),[recover,setRecover]=useState(location.pathname==='/reset-password')
+ const [session,setSession]=useState<Session|null|undefined>(undefined),[recover,setRecover]=useState(false)
+ const [tokenCallback]=useState(()=>new URLSearchParams(location.search).has('token_hash')||/[#&?]error(?:_code)?=/.test(location.href))
  useEffect(()=>{if(!db)return;const {data}=db.auth.onAuthStateChange((event,s)=>{setSession(s);if(event==='PASSWORD_RECOVERY')setRecover(true)});return ()=>data.subscription.unsubscribe()},[])
  if(!db)return <Frame>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to connect InvoiceEye.</Frame>
  if(session===undefined)return <Frame>Loading session…</Frame>
- if(!session||recover)return <Auth recover={Boolean(session)&&recover} done={()=>{location.replace('/')}}/>
+ if(recover)return <Frame><AuthForms initial="recovery"/></Frame>
+ if(location.pathname==='/reset-password'||location.pathname==='/auth/callback'){
+ const reset=location.pathname==='/reset-password'
+ if(!reset&&!tokenCallback&&session?.user.email_confirmed_at){return <Frame><h2>Email verified</h2><a href="/">Continue to InvoiceEye</a></Frame>}
+ return <Frame><EmailCallback recovery={reset} onVerified={()=>reset?setRecover(true):location.replace('/')}/></Frame>
+ }
+ if(!session)return <Frame><AuthForms/></Frame>
+ if(!session.user.email_confirmed_at)return <Frame><h2>Verify your email</h2><p>Use your confirmation link before opening the workspace.</p><SignOut/></Frame>
  return <Identity.Provider value={session.user}><Membership key={session.user.id} user={session.user.id}>{children}</Membership></Identity.Provider>
 }
