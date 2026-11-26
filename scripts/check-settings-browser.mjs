@@ -15,6 +15,10 @@ try {
   await p.getByLabel('Password', { exact: true }).fill(process.env.DEMO_PASSWORD)
   await p.getByRole('button', { name: 'Log in', exact: true }).click()
   await heading('Personal information')
+  assert.equal(await p.getByLabel('Display name').count(), 0)
+  assert.equal(await p.getByRole('button', { name: 'Save changes' }).count(), 0)
+  await p.waitForFunction(() => document.querySelector('aside .brand img')?.naturalWidth === 720)
+
   assert.equal(await p.locator('header').getByText('Log out').count(), 0)
   const trigger = p.getByRole('button', { name: 'Account menu' })
   await trigger.focus()
@@ -131,6 +135,12 @@ try {
       'overflow on ' + path,
     )
   }
+  await p.getByRole('button', { name: /Notifications/ }).click()
+  const notices = p.locator('.bell .noticeList')
+  const bounds = await notices.boundingBox()
+  assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 390 && bounds.y + bounds.height <= 844)
+  await notices.getByText('View all alerts').scrollIntoViewIfNeeded()
+  await p.keyboard.press('Escape')
   await p.getByRole('button', { name: 'Open navigation' }).click()
   await trigger.click()
   const box = await p.locator('.accountPop').boundingBox()
@@ -143,6 +153,7 @@ try {
   await p.getByLabel('Password', { exact: true }).fill(crypto.randomUUID())
   await p.getByRole('button', { name: 'Create account' }).click()
   await heading('Check your email')
+  await p.waitForFunction(() => document.querySelector('.access .brand img')?.naturalWidth === 720)
   assert.ok(await p.getByRole('button', { name: /Resend in/ }).isDisabled())
   await p.goto(origin + '/auth/callback?token_hash=invalid-test')
   await p.route('**/auth/v1/verify', (r) => json(r, { message: 'expired' }, 403))

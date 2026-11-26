@@ -1,3 +1,4 @@
+import {Brand} from './Brand'
 import {createContext,useContext,useEffect,useState,type FormEvent,type ReactNode} from 'react'
 import type {Session,User} from '@supabase/supabase-js'
 import {AuthForms,EmailCallback} from './AuthForms'
@@ -9,7 +10,7 @@ import type {Restaurant,Invoice} from '../types'
 const Identity=createContext<User|null>(null)
 export function useIdentity(){return useContext(Identity)!}
 function Frame({children}:{children:ReactNode}){
- return <div className="access"><div className="panel"><div className="brand"><img className="brandMark" src="/invoiceeye.svg#light" alt=""/><span className="brandName">Invoice<span>Eye</span></span></div>{children}</div></div>
+ return <div className="access"><div className="panel"><Brand/>{children}</div></div>
 }
 function Membership({user,children}:{user:string;children:ReactNode}){
  const [restaurants,setRestaurants]=useState<Restaurant[]|null>(null),[selected,setSelected]=useState(''),[name,setName]=useState('')

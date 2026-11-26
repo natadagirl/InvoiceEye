@@ -9,8 +9,7 @@ export function Settings() {
   const { section = 'account' } = useParams(),
     { restaurant, setRestaurant } = useWorkspace(),
     user = useIdentity()
-  const [display, setDisplay] = useState(''),
-    [name, setName] = useState(restaurant.name),
+  const [name, setName] = useState(restaurant.name),
     [threshold, setThreshold] = useState(restaurant.alert_threshold),
     [enabled, enable] = useState(restaurant.alerts_enabled)
   const [owner, setOwner] = useState(false),
@@ -21,24 +20,21 @@ export function Settings() {
     [error, fail] = useState('')
   useEffect(() => {
     let active = true
-    Promise.all([
-      db!.from('profiles').select('display_name').eq('id', user.id).single(),
-      db!.from('restaurant_members').select('role').eq('user_id', user.id).eq('restaurant_id', restaurant.id)
-        .single(),
-    ]).then(([profile, member]) => {
+    if (section === 'account') return
+    void db!.from('restaurant_members').select('role').eq('user_id', user.id).eq('restaurant_id', restaurant.id)
+      .single().then((member) => {
       if (!active) return
-      if (!profile.data || !member.data) {
+      if (!member.data) {
         fail('Settings could not be loaded.')
         return
       }
-      setDisplay(profile.data.display_name ?? '')
       setOwner(member.data.role === 'owner')
       setReady(true)
     })
     return () => {
       active = false
     }
-  }, [user.id, restaurant.id, reload])
+  }, [section, user.id, restaurant.id, reload])
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = e.currentTarget, values = new FormData(form)
@@ -58,12 +54,6 @@ export function Settings() {
         if (error) throw error
         form.reset()
         say('Password updated.')
-      } else if (section === 'account') {
-        const r = await db!.from('profiles').update({ display_name: display.trim() }).eq('id', user.id)
-          .select('display_name').single()
-        if (r.error) throw r.error
-        setDisplay(r.data.display_name)
-        say('Display name saved.')
       } else {
         const updates = section === 'restaurant'
           ? { name: name.trim() }
@@ -93,7 +83,7 @@ export function Settings() {
       </div>
       {error && (
         <p className='reviewError' role='alert'>
-          {error} {!ready && (
+          {error} {section !== 'account' && !ready && (
             <button
               onClick={() => {
                 fail('')
@@ -105,25 +95,16 @@ export function Settings() {
           )}
         </p>
       )}
-      {!ready ? !error && <p role='status'>Loading settings…</p> : section === 'account'
+      {section !== 'account' && !ready ? !error && <p role='status'>Loading settings…</p> : section === 'account'
         ? (
           <>
-            <form className='panel settingsForm' onSubmit={submit}>
+            <section className='panel settingsForm'>
               <h2>Personal information</h2>
-              <label>
-                Display name<input
-                  maxLength={100}
-                  autoComplete='name'
-                  value={display}
-                  onChange={(e) => setDisplay(e.target.value)}
-                />
-              </label>
               <label>
                 Registered email<input type='email' readOnly value={user.email ?? ''} />
               </label>
               <small>{user.email_confirmed_at ? 'Email verified' : 'Email awaiting verification'}</small>
-              <button className='primary' disabled={busy}>Save changes</button>
-            </form>
+            </section>
             <form name='password' className='panel settingsForm' onSubmit={submit}>
               <h2>Change password</h2>
               {[['current', 'Current password'], ['password', 'New password'], [

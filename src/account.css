@@ -35,7 +35,7 @@
   z-index: 15;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: white;
+  background: var(--surface);
   color: var(--ink);
   box-shadow: 0 6px 22px #11271f26;
 }
@@ -234,3 +234,16 @@
     white-space: normal;
   }
 }
+
+@media (max-width: 720px) {
+  .bell .noticeList {
+    position: fixed;
+    inset: 56px 12px auto;
+    width: auto;
+    max-height: min(70dvh, calc(100dvh - 68px - env(safe-area-inset-bottom)));
+    overscroll-behavior: contain;
+    overflow-wrap: anywhere;
+  }
+}
+header:has(.bell > button[aria-expanded="true"]) { position: relative; z-index: 13; }
+body:has(.bell > button[aria-expanded="true"]) .assistantLauncher { visibility: hidden; }

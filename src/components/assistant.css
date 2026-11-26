@@ -1,8 +1,8 @@
 .assistantShell {
-  background: white;
-  border: 1px solid #dbe4dc;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  color: #1d2936;
+  color: var(--ink);
   overflow: hidden;
   display: flex;
   min-width: 0;
@@ -23,7 +23,7 @@
   position: fixed;
   bottom: 16px;
   right: 20px;
-  background: #20794e;
+  background: var(--green);
   color: white;
   border-radius: 22px;
   padding: 10px 16px;
@@ -41,9 +41,9 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
   width: 205px;
   flex-shrink: 0;
   padding: 15px;
-  background: #f6f7f3;
+  background: var(--canvas);
   overflow: auto;
-  border-right: 1px solid #dbe4dc;
+  border-right: 1px solid var(--border);
 }
 .chatHistory h2 {
   font-size: 14px;
@@ -58,10 +58,10 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
 }
 .chatHistory small {
   display: block;
-  color: #58675f;
+  color: var(--muted);
 }
 .chatHistory .current {
-  background: #e1ede5;
+  background: var(--green-soft);
 }
 .chatMain {
   display: flex;
@@ -75,7 +75,7 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
   gap: 8px;
   align-items: center;
   padding: 12px;
-  border-bottom: 1px solid #dbe4dc;
+  border-bottom: 1px solid var(--border);
 }
 .chatBar strong {
   flex: 1;
@@ -86,7 +86,7 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
 .chatBar button,
 .chatAction button,
 .chatError button {
-  color: #216747;
+  color: var(--green);
 }
 .chatScroll {
   flex: 1;
@@ -95,7 +95,7 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
   min-height: 0;
 }
 .chatQuestion {
-  background: #edf4ee;
+  background: var(--green-soft);
   border-radius: 8px;
   padding: 10px 14px;
   white-space: pre-wrap;
@@ -127,8 +127,8 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
 .chatEmpty button,
 .chatComposer > button {
   font-size: 13px;
-  color: #226848;
-  border: 1px solid #d3e2d7;
+  color: var(--green);
+  border: 1px solid var(--border);
   padding: 5px 8px;
   border-radius: 6px;
 }
@@ -143,7 +143,7 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
 }
 .chatComposer {
   padding: 12px;
-  border-top: 1px solid #dbe4dc;
+  border-top: 1px solid var(--border);
 }
 .chatComposer > div {
   display: flex;
@@ -155,7 +155,7 @@ body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
   min-width: 0;
   flex: 1;
   padding: 8px;
-  border: 1px solid #cddacf;
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 .chatComposer > button {
