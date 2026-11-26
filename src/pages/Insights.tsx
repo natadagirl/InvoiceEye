@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react'
-import {Link} from 'react-router-dom'
+import {Link,useSearchParams} from 'react-router-dom'
 import {db} from '../services/supabase'
 import {useWorkspace,money} from '../services/analytics'
 import {calculate,offset,today,type Snapshot,type Fact} from '../../supabase/functions/_shared/metrics'
@@ -32,13 +32,14 @@ function ReportView({report}:{report:Report}){
 export function Insights({month}:{month:string}){
  const {restaurant,rows}=useWorkspace(),[months,setMonths]=useState(12),[list,setList]=useState<RecordRow[]>([]),[active,setActive]=useState<RecordRow|null>(null)
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[stale,setStale]=useState(false),[revision,reload]=useState(0)
+ const [params,setParams]=useSearchParams(),requested=params.get('report')
  const snapshot=calculate(rows,month,months,today())
  const insufficient=!snapshot.coverage.count||(snapshot.coverage.count<2&&!snapshot.changes.length)
  useEffect(()=>{let alive=true;setLoading(true)
  ;(async()=>{const history:RecordRow[]=[];for(let i=0;;i+=100){const {data,error}=await db!.from('ai_reports').select('id,report').eq('restaurant_id',restaurant.id).order('created_at',{ascending:false}).order('id').range(i,i+99);if(error)throw error;history.push(...data.filter(r=>valid(r.report)));if(data.length<100)break}
- if(alive){setList(history);setActive(old=>old??history.find(r=>r.report.snapshot.end===month&&r.report.snapshot.months===months)??null)}
+ if(alive){setList(history);setActive(old=>(requested?history.find(r=>r.id===requested):old)??history.find(r=>r.report.snapshot.end===month&&r.report.snapshot.months===months)??null)}
  })().catch(()=>{if(alive)setError('Report history could not be loaded.')}).finally(()=>{if(alive)setLoading(false)})
- return ()=>{alive=false}},[restaurant.id,month,months,revision])
+ return ()=>{alive=false}},[restaurant.id,month,months,revision,requested])
  useEffect(()=>{let alive=true;setStale(false)
  if(!active)return
  const s=active.report.snapshot
@@ -54,12 +55,12 @@ export function Insights({month}:{month:string}){
  try{const {data,error}=await db!.functions.invoke('generate-analysis',{body:{restaurantId:restaurant.id,end:month,months}})
  if(error){const body=await error.context?.json?.().catch(()=>null);throw Error(body?.error??'Unable to reach the analysis service.')}
  if(!valid(data?.report))throw Error('Report validation failed.')
- setActive(data);setList(prev=>[data,...prev.filter(r=>r.id!==data.id)])
+ setActive(data);setParams({report:data.id});setList(prev=>[data,...prev.filter(r=>r.id!==data.id)])
  }catch(e){setError(e instanceof Error?e.message:'Generation failed.')}finally{setBusy(false)}
  }
  return <div className="analysis"><section className="panel analysisSection"><div className="reportControls"><label>Analysis period <select disabled={busy} value={months} onChange={e=>{setMonths(Number(e.target.value));setActive(null)}}>{[1,3,6,12].map(n=><option value={n} key={n}>{n} month{n!==1?'s':''} ending {month}</option>)}</select></label><button className="primary" disabled={busy||insufficient} onClick={generate}>{busy?'Generating analysis…':'Generate analysis'}</button></div><p>{snapshot.coverage.count} confirmed CAD invoices · {snapshot.start} to {month}</p>{insufficient&&<p>Insufficient purchasing history. Select a longer period or confirm additional invoices.</p>}</section>
  {error&&<div role="alert" className="reviewError">{error} <button onClick={()=>{setError('');reload(n=>n+1)}}>Reload history</button></div>}
- <label>Analysis history <select disabled={busy||loading} value={active?.id??''} onChange={e=>setActive(list.find(r=>r.id===e.target.value)??null)}><option value="">{loading?'Loading reports…':'Choose a saved report'}</option>{list.map(r=><option key={r.id} value={r.id}>{r.report.snapshot.start} – {r.report.snapshot.end} · {new Date(r.report.generatedAt).toLocaleString()}</option>)}</select></label>
+ <label>Analysis history <select disabled={busy||loading} value={active?.id??''} onChange={e=>{setActive(list.find(r=>r.id===e.target.value)??null);setParams(e.target.value?{report:e.target.value}:{})}}><option value="">{loading?'Loading reports…':'Choose a saved report'}</option>{list.map(r=><option key={r.id} value={r.id}>{r.report.snapshot.start} – {r.report.snapshot.end} · {new Date(r.report.generatedAt).toLocaleString()}</option>)}</select></label>
  {stale&&<p className="reviewNotes">Confirmed invoice coverage has changed since this report was generated.</p>}
  {active?<ReportView report={active.report}/>:!loading&&<section className="panel analysisSection"><h2>No report selected</h2><p>Generate an analysis for this period or reopen a saved report.</p></section>}</div>
 }
