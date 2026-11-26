@@ -12,7 +12,7 @@ In the hosted project's Auth settings, enable the Email provider and configure t
 
 ## Data and access
 
-The browser uses `src/services/supabase.ts`. The Access component restores sessions, handles login, signup and password recovery, and loads RLS-filtered restaurant memberships. New users create a restaurant through an atomic onboarding RPC. Users with multiple restaurants can switch workspaces. Owners can edit the restaurant name, price threshold and in-app alert switch. Members can edit their own display name and password.
+The browser uses `src/services/supabase.ts`. The Access component restores sessions, handles login, signup and password recovery, and loads RLS-filtered restaurant memberships. New users create a restaurant through an atomic onboarding RPC. Users with multiple restaurants can switch workspaces. Owners can edit the restaurant name, price threshold and in-app alert switch. Members can change their own password.
 
 The purchasing service pages through invoices and items in the selected restaurant. The dashboard totals ready CAD invoices including tax. Price analysis uses only standardized ready CAD lines, grouped by supplier and ingredient identity. Ingredient identity includes specification and base unit. Package size means base units per purchased unit. The tracker weights normalized unit prices by purchased base quantity, and compares consecutive calendar months. Missing or zero baselines yield no percentage. Other currencies remain visible on invoices, outside CAD analytics.
 
@@ -123,3 +123,20 @@ Open the restaurant identity in the sidebar for My account, Restaurant settings,
 The `20261125000200_account_settings.sql` and `20261125000300_alert_preferences.sql` migrations add column-level permissions, an owner-controlled alert preference and membership-scoped receipts. Use `supabase/tests/settings_rollback.sql` for a rollback-only policy check. The opt-in `scripts/check-context.mjs` uses the existing fixture login environment and adds a synthetic verification thread. `scripts/check-settings-browser.mjs` runs against a local frontend using an installed Playwright module, optional CHROME_BIN, and the ignored fixture environment. It intercepts restaurant edits, password updates, notification writes and test email requests. The separate `scripts/check-auth-browser.mjs` verifies successful callbacks, recovery and unverified-user handling with simulated Auth responses.
 
 [Cloudflare Pages and Resend setup](docs/CLOUDFLARE_AND_EMAIL.md) covers the custom domain, callback allowlist, DNS, SMTP, templates and mailbox acceptance checks.
+
+### Brand assets and production email
+
+The approved source is `public/invoiceeye-email-logo-v2.png`. The app uses cropped, transparent WebP derivatives on dark and light surfaces. The light variant uses Brand Navy for the Invoice lettering. The existing browser icon remains `/invoiceeye.svg`.
+
+| Token | Approved color |
+|---|---|
+| `--ink` | Brand Navy `#1E2A38` |
+| `--green` | Primary Green `#1E754D` |
+| `--orange` | Accent Orange `#F5912B` |
+| `--canvas` | Warm Off-White `#F5F4F0` |
+| `--surface` | Pure White `#FFFFFF` |
+| `--muted` | Slate Gray `#606A76` |
+| `--green-soft` | Pale Green `#E7F0EB` |
+| `--border` | Soft Border `#DCE5DE` |
+
+The project owner manually verified production Resend delivery, signup confirmation, password recovery and the branded email logo in Gmail. My account shows the registered email and verification status and supports password changes.
