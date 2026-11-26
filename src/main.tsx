@@ -2,11 +2,13 @@ import {StrictMode,useEffect,useState} from 'react'
 import {createRoot} from 'react-dom/client'
 import {BrowserRouter,NavLink,Navigate,Route,Routes,useLocation} from 'react-router-dom'
 import {Dashboard} from './pages/Dashboard'
-import {Invoices,Tracker,Settings} from './pages/Workspace'
+import {Invoices,Tracker} from './pages/Workspace'
 import {Icon,type IconName} from './components/Icon'
 import {useAnalytics,useWorkspace} from './services/analytics'
-import {db} from './services/supabase'
-import {Access,SignOut} from './components/Access'
+import {Settings} from './pages/Settings'
+import {Bell,AlertList,useNotifications} from './components/Notifications'
+import {WorkspaceMenu} from './components/WorkspaceMenu'
+import {Access} from './components/Access'
 import {Insights} from './pages/Insights'
 import './styles.css'
 import {Assistant} from './components/Assistant'
@@ -18,18 +20,14 @@ const nav:{path:string;label:string;icon:IconName;desc:string}[]=[
  {path:'/ai-assistant',label:'AI Assistant',icon:'insights',desc:'Explore your restaurant’s purchasing records.'},
  {path:'/settings',label:'Settings',icon:'settings',desc:'Manage your restaurant workspace preferences.'}]
 function App(){
- const {pathname,search}=useLocation(),page=nav.find(p=>p.path===pathname)??nav[0]
+ const {pathname,search}=useLocation(),page=nav.find(p=>p.path===pathname||p.path==='/settings'&&pathname.startsWith('/settings/'))??(pathname==='/notifications'?{label:'Notifications',desc:'Review comparable supplier price increases.'}:nav[0])
  const {months}=useAnalytics(),{restaurant,rows}=useWorkspace()
+ const notices=useNotifications()
  const [month,setMonth]=useState(months[months.length-1]),[menu,setMenu]=useState(false)
- const [threshold,setThreshold]=useState(restaurant.alert_threshold),[error,setError]=useState('')
  useEffect(()=>{document.title=page.label+' | InvoiceEye';setMenu(false);window.scrollTo(0,0)},[page])
- async function updateThreshold(n:number){
-  const {error}=await db!.from('restaurants').update({alert_threshold:n}).eq('id',restaurant.id).select('id').single()
-  if(error)setError('Only a restaurant owner can save settings. '+error.message)
-  else{restaurant.alert_threshold=n;setThreshold(n);setError('')}
- }
  useEffect(()=>{const target=new URLSearchParams(search).get('month');if(target&&months.includes(target))setMonth(target)},[search]) 
  function navItem(i:typeof nav[number]){return <NavLink key={i.path} end to={i.path} onClick={()=>setMenu(false)}><Icon name={i.icon} size={19}/>{i.label}</NavLink>}
- return <div className="app">{menu&&<button className="scrim" aria-label="Close navigation" onClick={()=>setMenu(false)}/>}<aside className={menu?'open':''}><div className="brand"><img className="brandMark" src="/invoiceeye.svg#dark" alt=""/><span className="brandName">Invoice<span>Eye</span></span></div><div className="navGroup">WORKSPACE</div><nav>{nav.slice(0,5).map(navItem)}</nav><div className="navGroup secondary">PREFERENCES</div><nav>{navItem(nav[5])}</nav><div className="restaurant"><div className="avatar">{restaurant.name.slice(0,2).toUpperCase()}</div><div><strong>{restaurant.name}</strong><small>Restaurant workspace</small></div></div></aside><main><header><div className="crumb"><button className="menuBtn" onClick={()=>setMenu(!menu)} aria-label="Open navigation"><Icon name="menu"/></button><Icon name="store" size={16}/><span>Workspace</span><span className="slash">/</span><b>{page.label}</b></div><div className="authLinks">{restaurant.is_demo&&<div className="demo"><i/>Synthetic demo data</div>}<SignOut/></div></header><div className="content"><div className="heading"><div><div className="eyebrow"><i/>{pathname==='/'?'PURCHASING OVERVIEW':'RESTAURANT WORKSPACE'}</div><h1>{page.label}</h1><p>{page.desc}</p></div>{pathname!=='/settings'&&pathname!=='/ai-assistant'&&!(pathname==='/invoices'&&new URLSearchParams(search).has('from'))&&<label className="period"><Icon name="calendar" size={17}/><select aria-label="Reporting month" value={month} onChange={e=>setMonth(e.target.value)}>{months.map(m=><option value={m} key={m}>{new Date(m+'-01T12:00:00').toLocaleDateString('en-CA',{month:'long',year:'numeric'})}</option>)}</select></label>}</div>{error&&<p role="alert">{error}</p>}{!rows.length&&pathname==='/'&&<p className="empty">Your restaurant has no invoices yet. Open Invoices to upload the first file.</p>}<Routes><Route path="/" element={<Dashboard month={month} threshold={threshold}/>}/><Route path="/invoices" element={<Invoices month={month}/>}/><Route path="/price-tracker" element={<Tracker month={month}/>}/><Route path="/ai-insights" element={<Insights key={month} month={month}/>}/><Route path="/ai-assistant" element={null}/><Route path="/settings" element={<Settings threshold={threshold} onChange={updateThreshold}/>}/><Route path="*" element={<Navigate replace to="/"/>}/></Routes><Assistant key={restaurant.id} month={month} menu={menu}/></div></main></div>
+ return <div className="app">{menu&&<button className="scrim" aria-label="Close navigation" onClick={()=>setMenu(false)}/>}<aside className={menu?'open':''}><div className="brand"><img className="brandMark" src="/invoiceeye.svg#dark" alt=""/><span className="brandName">Invoice<span>Eye</span></span></div><div className="navGroup">WORKSPACE</div><nav>{nav.slice(0,5).map(navItem)}</nav><div className="navGroup secondary">PREFERENCES</div><nav>{navItem(nav[5])}</nav><WorkspaceMenu closeDrawer={()=>setMenu(false)}/></aside><main><header><div className="crumb"><button className="menuBtn" onClick={()=>setMenu(!menu)} aria-label="Open navigation"><Icon name="menu"/></button><Icon name="store" size={16}/><span>Workspace</span><span className="slash">/</span><b>{page.label}</b></div><div className="authLinks">{restaurant.is_demo&&<div className="demo"><i/>Synthetic demo data</div>}<Bell state={notices}/></div></header><div className="content"><div className="heading"><div><div className="eyebrow"><i/>{pathname==='/'?'PURCHASING OVERVIEW':'RESTAURANT WORKSPACE'}</div><h1>{page.label}</h1><p>{page.desc}</p></div>{pathname!=='/notifications'&&!pathname.startsWith('/settings')&&pathname!=='/ai-assistant'&&!(pathname==='/invoices'&&new URLSearchParams(search).has('from'))&&<label className="period"><Icon name="calendar" size={17}/><select aria-label="Reporting month" value={month} onChange={e=>setMonth(e.target.value)}>{months.map(m=><option value={m} key={m}>{new Date(m+'-01T12:00:00').toLocaleDateString('en-CA',{month:'long',year:'numeric'})}</option>)}</select></label>}</div>{!rows.length&&pathname==='/'&&<p className="empty">Your restaurant has no invoices yet. Open Invoices to upload the first file.</p>}<Routes><Route path="/" element={<Dashboard month={month} threshold={restaurant.alert_threshold}/>}/><Route path="/invoices" element={<Invoices month={month}/>}/><Route path="/price-tracker" element={<Tracker month={month}/>}/><Route path="/ai-insights" element={<Insights key={month} month={month}/>}/><Route path="/ai-assistant" element={null}/><Route path="/notifications" element={<AlertList state={notices} full/>}/><Route path="/settings/:section?" element={<Settings key={pathname}/>}/><Route path="*" element={<Navigate replace to="/"/>}/></Routes><Assistant key={restaurant.id} month={month} menu={menu}/></div></main></div>
 }
 createRoot(document.getElementById('root')!).render(<StrictMode><BrowserRouter><Access><App/></Access></BrowserRouter></StrictMode>)
+import './account.css'

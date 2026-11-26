@@ -1,4 +1,8 @@
 const paths = {
+ person:'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2',
+ logout:'M10 4H4v16h6 M9 12h12m-5-5 5 5-5 5',
+ bell:'M4 17h16c-2-2-2-4-2-8a6 6 0 0 0-12 0c0 4 0 6-2 8z M9 20q3 4 6 0',
+ send:'M3 3l19 9-19 9 4-9z M7 12h14',plus:'M12 4v16M4 12h16',
  dashboard:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',
  invoices:'M5 3h11l3 3v15l-3-2-3 2-3-2-3 2-2-1z M8 8h7 M8 12h8 M8 16h5',
  tracker:'M3 18l6-7 4 3 8-10 M15 4h6v6', insights:'M12 3l2.3 6.7L21 12l-6.7 2.3L12 21l-2.3-6.7L3 12l6.7-2.3z M20 2v4 M18 4h4',

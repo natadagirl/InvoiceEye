@@ -6,4 +6,4 @@ export type Invoice = {
   uuid:string; id:string; date:string; supplier:string; supplierId:string|null; lines:Line[];
   status:string; amount:number|null; currency:string; file:string|null;
 }
-export type Restaurant = {id:string; name:string; is_demo:boolean; alert_threshold:number}
+export type Restaurant = {id:string; name:string; is_demo:boolean; alerts_enabled:boolean;alert_threshold:number}

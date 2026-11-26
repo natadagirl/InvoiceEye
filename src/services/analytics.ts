@@ -1,6 +1,6 @@
 import {createContext,useContext} from 'react'
 import type {Invoice,Restaurant} from '../types'
-export const WorkspaceContext=createContext<{rows:Invoice[];restaurant:Restaurant;refresh:()=>void}|null>(null)
+export const WorkspaceContext=createContext<{rows:Invoice[];restaurant:Restaurant;setRestaurant:(r:Restaurant)=>void;refresh:()=>void}|null>(null)
 export function useWorkspace(){const value=useContext(WorkspaceContext);if(!value)throw new Error('Workspace unavailable');return value}
 export const money=(n:number,digits=2,currency='CAD')=>new Intl.NumberFormat('en-CA',{style:'currency',currency,minimumFractionDigits:digits,maximumFractionDigits:digits}).format(n)
 export const change=(a:number,b:number)=>(a/b-1)*100

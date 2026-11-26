@@ -8,7 +8,7 @@ import {InvoiceTable} from '../components/InvoiceTable'
 export function Dashboard({month,threshold}:{month:string;threshold:number}){
  const {inMonth,comparisons}=useAnalytics()
  const invoices=inMonth(month),period=periodSpend(useWorkspace().rows,month,today()),spend=period.spend
- const alerts=comparisons(month).filter(i=>i.delta!==null && i.delta>=threshold)
+ const alerts=(useWorkspace().restaurant.alerts_enabled?comparisons(month):[]).filter(i=>i.delta!==null && i.delta>=threshold)
  const count=new Set(invoices.map(i=>i.supplierId).filter(Boolean)).size
  const delta=period.delta
  const cards:{label:string;value:string;icon:IconName;tone:string;detail:React.ReactNode}[]=[
