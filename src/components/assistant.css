@@ -1,8 +1,198 @@
-.assistantShell{background:white;border:1px solid #dbe4dc;border-radius:14px;color:#1d2936;overflow:hidden;display:flex;min-width:0}
-.fullChat{height:clamp(440px,69dvh,850px)}.floatChat{position:fixed;right:20px;bottom:18px;width:min(440px,calc(100vw - 32px));height:min(580px,75dvh);box-shadow:0 8px 40px #162d262a;z-index:12}
-.assistantLauncher{position:fixed;bottom:16px;right:20px;background:#20794e;color:white;border-radius:22px;padding:10px 16px;z-index:10}
-body:has(.assistantLauncher) main{padding-bottom:66px}body:has(dialog[open]) :is(.assistantLauncher,.floatChat),.assistantShell[hidden],.assistantLauncher[hidden]{display:none}
-.chatHistory{width:205px;flex-shrink:0;padding:15px;background:#f6f7f3;overflow:auto;border-right:1px solid #dbe4dc}.chatHistory h2{font-size:14px;margin:20px 0 8px}.chatHistory button{display:block;width:100%;text-align:left;padding:8px;overflow-wrap:anywhere}.chatHistory small{display:block;color:#58675f}.chatHistory .current{background:#e1ede5}
-.chatMain{display:flex;flex-direction:column;flex:1;min-width:0}.chatBar,.chatAction{display:flex;gap:8px;align-items:center;padding:12px;border-bottom:1px solid #dbe4dc}.chatBar strong{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chatBar button,.chatAction button,.chatError button{color:#216747}
-.chatScroll{flex:1;overflow:auto;padding:16px;min-height:0}.chatQuestion{background:#edf4ee;border-radius:8px;padding:10px 14px;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 18px auto;width:fit-content;max-width:90%}.chatEvidence{overflow-wrap:anywhere;margin-bottom:22px}.chatEvidence ul{padding-left:18px;list-style:disc;font-size:13px}.chatEvidence table{min-width:0;font-size:13px}.chatSources,.chatEmpty{display:flex;flex-wrap:wrap;gap:8px}.chatSources a,.chatEmpty button,.chatComposer>button{font-size:13px;color:#226848;border:1px solid #d3e2d7;padding:5px 8px;border-radius:6px}.chatEmpty{align-items:flex-start;flex-direction:column;margin:16px auto;max-width:420px}.chatEmpty img{width:42px}.chatComposer{padding:12px;border-top:1px solid #dbe4dc}.chatComposer>div{display:flex;gap:9px;align-items:center}.chatComposer textarea{resize:vertical;min-width:0;flex:1;padding:8px;border:1px solid #cddacf;border-radius:6px}.chatComposer>button{margin-bottom:6px}.chatError{padding:8px 12px;background:#fff2e6}.mobileHistory{display:none}
-@media(max-width:720px){.fullChat{position:relative;height:70dvh}.mobileHistory{display:block}.chatHistory{display:none}.chatHistory.show{display:block;position:absolute;inset:45px auto 0 0;z-index:2;box-shadow:2px 4px 12px #20372b20}.floatChat{bottom:10px;right:8px;width:calc(100vw - 16px)}.chatBar{gap:5px;font-size:13px}}
+.assistantShell {
+  background: white;
+  border: 1px solid #dbe4dc;
+  border-radius: 14px;
+  color: #1d2936;
+  overflow: hidden;
+  display: flex;
+  min-width: 0;
+}
+.fullChat {
+  height: clamp(440px,69dvh,850px);
+}
+.floatChat {
+  position: fixed;
+  right: 20px;
+  bottom: 18px;
+  width: min(440px,calc(100vw - 32px));
+  height: min(580px,75dvh);
+  box-shadow: 0 8px 40px #162d262a;
+  z-index: 12;
+}
+.assistantLauncher {
+  position: fixed;
+  bottom: 16px;
+  right: 20px;
+  background: #20794e;
+  color: white;
+  border-radius: 22px;
+  padding: 10px 16px;
+  z-index: 10;
+}
+body:has(.assistantLauncher) main {
+  padding-bottom: 66px;
+}
+body:has(dialog[open]) :is(.assistantLauncher,.floatChat),
+.assistantShell[hidden],
+.assistantLauncher[hidden] {
+  display: none;
+}
+.chatHistory {
+  width: 205px;
+  flex-shrink: 0;
+  padding: 15px;
+  background: #f6f7f3;
+  overflow: auto;
+  border-right: 1px solid #dbe4dc;
+}
+.chatHistory h2 {
+  font-size: 14px;
+  margin: 20px 0 8px;
+}
+.chatHistory button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  overflow-wrap: anywhere;
+}
+.chatHistory small {
+  display: block;
+  color: #58675f;
+}
+.chatHistory .current {
+  background: #e1ede5;
+}
+.chatMain {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.chatBar,
+.chatAction {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #dbe4dc;
+}
+.chatBar strong {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chatBar button,
+.chatAction button,
+.chatError button {
+  color: #216747;
+}
+.chatScroll {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  min-height: 0;
+}
+.chatQuestion {
+  background: #edf4ee;
+  border-radius: 8px;
+  padding: 10px 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0 18px auto;
+  width: fit-content;
+  max-width: 90%;
+}
+.chatEvidence {
+  overflow-wrap: anywhere;
+  margin-bottom: 22px;
+}
+.chatEvidence ul {
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 13px;
+}
+.chatEvidence table {
+  min-width: 0;
+  font-size: 13px;
+}
+.chatSources,
+.chatEmpty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chatSources a,
+.chatEmpty button,
+.chatComposer > button {
+  font-size: 13px;
+  color: #226848;
+  border: 1px solid #d3e2d7;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.chatEmpty {
+  align-items: flex-start;
+  flex-direction: column;
+  margin: 16px auto;
+  max-width: 420px;
+}
+.chatEmpty img {
+  width: 42px;
+}
+.chatComposer {
+  padding: 12px;
+  border-top: 1px solid #dbe4dc;
+}
+.chatComposer > div {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+.chatComposer textarea {
+  resize: vertical;
+  min-width: 0;
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #cddacf;
+  border-radius: 6px;
+}
+.chatComposer > button {
+  margin-bottom: 6px;
+}
+.chatError {
+  padding: 8px 12px;
+  background: #fff2e6;
+}
+.mobileHistory {
+  display: none;
+}
+@media (max-width:720px) {
+  .fullChat {
+    position: relative;
+    height: 70dvh;
+  }
+  .mobileHistory {
+    display: block;
+  }
+  .chatHistory {
+    display: none;
+  }
+  .chatHistory.show {
+    display: block;
+    position: absolute;
+    inset: 45px auto 0 0;
+    z-index: 2;
+    box-shadow: 2px 4px 12px #20372b20;
+  }
+  .floatChat {
+    bottom: 10px;
+    right: 8px;
+    width: calc(100vw - 16px);
+  }
+  .chatBar {
+    gap: 5px;
+    font-size: 13px;
+  }
+}
