@@ -149,3 +149,11 @@ The production Confirm signup and Reset password HTML is recorded in `supabase/t
 The root route shows the public landing page to signed-out visitors and opens the dashboard for authenticated users. `/login` and `/signup` enter the existing Auth form, while protected deep links retain their inline sign-in behavior. Confirmation and recovery keep their existing routes.
 
 The landing hero is a static illustration with sample data. The showcase image was captured from the authorized Juniper Kitchen synthetic dashboard, cropped to the dashboard content, and exported as WebP. Public visitors do not query restaurant records. A future product video can be added near the showcase when footage is available.
+
+### Invoice review matching and retries
+
+Invoice review searches the current restaurant's supplier and ingredient lists inside the dialog. A new supplier name stays on the draft until confirmation, where the existing tenant-scoped function reuses equivalent supplier names or creates the supplier in the invoice transaction. Ingredient names can match automatically when their normalized words and base unit identify one catalog entry. Similar names are suggestions, and reviewers can change or clear any match. Ambiguous varieties and specifications require review.
+
+Extraction retries transient provider failures at most twice within a 75-second generation budget. The same invoice lease covers every attempt. Rate-limit responses are retried only when the provider supplies a usable Retry-After value within that budget. Failed extraction retains the upload and the review screen retains unsaved edits after an unsuccessful retry. The model selection and database confirmation safeguards are unchanged.
+
+Run `npm test`, the Deno extraction recovery test, and `scripts/check-review-browser.mjs` to exercise matching, review and recovery. The Chrome script uses the local app, a locally installed Playwright module, and intercepted synthetic backend responses. Set `PLAYWRIGHT_MODULE`, `CHROME_BIN`, and optionally `SCREENSHOT_DIR`. Its default local origin is `http://127.0.0.1:5242`.

@@ -1,0 +1,142 @@
+.review .editPane {
+  min-width: 0;
+}
+.review .reviewSectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.review .invoiceHeaderFields {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.review .invoiceFieldPair {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+}
+.review .invoiceFieldPair label,
+.review .invoiceTotalField label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.review input,
+.review textarea {
+  min-width: 0;
+  border-color: var(--border);
+  padding: 8px 10px;
+}
+.review input[type=date] {
+  min-height: 40px;
+}
+.review .invoiceTotalField {
+  background: var(--green-soft);
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 650;
+}
+.review .reviewSelector {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.review .reviewSelectTrigger {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  background: var(--surface);
+}
+.review .reviewOptions {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.review .reviewOptionList {
+  display: grid;
+  gap: 4px;
+  max-height: 12rem;
+  overflow: auto;
+  margin-top: 5px;
+  padding: 4px;
+}
+.review .reviewOptionList button {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.review .reviewOptionList button:hover,
+.review .reviewOptionList button:focus-visible {
+  background: var(--green-soft);
+}
+.review .reviewOptionList small,
+.review .reviewOptionList p {
+  color: var(--muted);
+}
+.review .reviewLine {
+  padding: 0;
+  margin: 8px 0;
+}
+.review .reviewLineSummary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  border: 0;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+.review .reviewLineSummary strong {
+  display: block;
+}
+.review .reviewLineSummary small {
+  color: var(--muted);
+}
+.review .reviewLinePrices {
+  text-align: right;
+}
+.review .reviewLineFields {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding: 12px;
+}
+.review .reviewLineFields label {
+  margin: 0;
+}
+.review .reviewLineFields > button {
+  justify-self: start;
+}
+.review .reviewBulkActions {
+  display: flex;
+  gap: 6px;
+}
+.review .reviewBulkActions button {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+@media (max-width:540px) {
+  .review .invoiceFieldPair {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .review .reviewLineSummary {
+    grid-template-columns: minmax(0,1fr) auto;
+  }
+  .review .reviewLineSummary > :last-child {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .review .reviewLinePrices {
+    grid-column: 1;
+    text-align: left;
+  }
+}
