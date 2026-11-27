@@ -1,15 +1,22 @@
 import {createContext,useContext} from 'react'
 import type {Invoice,Restaurant} from '../types'
+import {today} from '../../supabase/functions/_shared/metrics.ts'
 export const WorkspaceContext=createContext<{rows:Invoice[];restaurant:Restaurant;setRestaurant:(r:Restaurant)=>void;refresh:()=>void}|null>(null)
 export function useWorkspace(){const value=useContext(WorkspaceContext);if(!value)throw new Error('Workspace unavailable');return value}
 export const money=(n:number,digits=2,currency='CAD')=>new Intl.NumberFormat('en-CA',{style:'currency',currency,minimumFractionDigits:digits,maximumFractionDigits:digits}).format(n)
 export const change=(a:number,b:number)=>(a/b-1)*100
+export const reportingMonthLabel=(month:string)=>new Intl.DateTimeFormat('en-CA',{month:'long',year:'numeric',timeZone:'America/Edmonton'}).format(new Date(month+'-01T12:00:00Z'))
+export function reportingMonths(invoiceMonths:string[]){
+ const current=today().slice(0,7)
+ const available=[...new Set([current,...invoiceMonths])].sort()
+ return {current,available}
+}
 export const shortMonth=(m:string)=>new Date(m+'-01T12:00:00').toLocaleDateString('en-CA',{month:'short'})
 export const displayDate=(d:string)=>new Date(d+'T12:00:00').toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'})
 export function previousMonth(m:string){const d=new Date(m+'-01T00:00:00Z');d.setUTCMonth(d.getUTCMonth()-1);return d.toISOString().slice(0,7)}
 export function analytics(rows:Invoice[]){
  const months=[...new Set(rows.map(i=>i.date.slice(0,7)))].sort()
- if(!months.length)months.push(new Date().toISOString().slice(0,7))
+ if(!months.length)months.push(today().slice(0,7))
  const inMonth=(m:string)=>rows.filter(i=>i.date.startsWith(m))
  const ready=(m:string)=>inMonth(m).filter(i=>i.status==='ready' && i.currency==='CAD')
  const monthlySpend=(m:string)=>ready(m).reduce((sum,i)=>sum+(i.amount??0),0)

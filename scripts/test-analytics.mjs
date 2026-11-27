@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
-import {analytics} from '../src/services/analytics.ts'
+import {mock} from 'node:test'
+import {periodSpend} from '../supabase/functions/_shared/metrics.ts'
+import {analytics,reportingMonths,reportingMonthLabel} from '../src/services/analytics.ts'
 const row=(date,price,pack,quantity,productKey='a',supplierId='s',currency='CAD')=>({
  date,status:'ready',currency,supplierId,supplier:supplierId,amount:price*quantity,
  lines:[{productKey,ingredient:'Tomatoes',specification:'Roma',baseUnit:'kg',quantity,packageSize:pack,normalizedPrice:price/pack}]
@@ -16,3 +18,18 @@ assert.equal(model.monthlySpend('2026-10'),646)
 assert.equal(model.comparisons('2026-12')[0].delta,null)
 assert.equal(model.comparisons('2026-10').filter(i=>i.delta!==null).length,1)
 console.log('Passed: normalized packs, supplier/specification isolation, currency filtering, missing previous month.')
+
+// December has started in UTC, but the Edmonton reporting calendar is still in November.
+mock.timers.enable({apis:['Date'],now:new Date('2026-12-01T05:59:00Z')})
+try{
+ const {current,available}=reportingMonths(model.months)
+ assert.equal(current,'2026-11')
+ assert.deepEqual(available,['2026-09','2026-10','2026-11','2026-12'])
+ assert.deepEqual(reportingMonths([]).available,['2026-11'])
+ assert.equal(reportingMonthLabel(current),'November 2026')
+ assert.equal(reportingMonths([current]).available.length,1)
+ const future=periodSpend([row('2026-12-01',50,5,3)],'2026-12','2026-11-30')
+ assert.equal(future.scope,'Future-dated records')
+ assert.equal(future.futureSpend,150)
+ console.log('Passed: Edmonton month boundary, available historical and future periods, and future-record indicators.')
+}finally{mock.timers.reset()}
