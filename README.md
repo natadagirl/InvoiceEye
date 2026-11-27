@@ -142,3 +142,10 @@ The approved source is `public/invoiceeye-email-logo-v2.png`. The app uses cropp
 The project owner manually verified production Resend delivery, signup confirmation, password recovery and the branded email logo in Gmail. My account shows the registered email and verification status and supports password changes.
 
 The production Confirm signup and Reset password HTML is recorded in `supabase/templates/` as supplied by the owner. Both templates use `{{ .ConfirmationURL }}` and the tested logo URL with `?v=3`.
+
+
+### Public site
+
+The root route shows the public landing page to signed-out visitors and opens the dashboard for authenticated users. `/login` and `/signup` enter the existing Auth form, while protected deep links retain their inline sign-in behavior. Confirmation and recovery keep their existing routes.
+
+The landing hero is a static illustration with sample data. The showcase image was captured from the authorized Juniper Kitchen synthetic dashboard, cropped to the dashboard content, and exported as WebP. Public visitors do not query restaurant records. A future product video can be added near the showcase when footage is available.

@@ -1,3 +1,5 @@
+import {Navigate,useLocation} from 'react-router-dom'
+import {Landing} from '../pages/Landing'
 import {Brand} from './Brand'
 import {createContext,useContext,useEffect,useState,type FormEvent,type ReactNode} from 'react'
 import type {Session,User} from '@supabase/supabase-js'
@@ -39,9 +41,16 @@ export function SignOut(){
  return <><button onClick={async()=>{const {error}=await db!.auth.signOut({scope:'local'});if(error)setError(error.message)}}>Log out</button>{error&&<span role="alert">{error}</span>}</>
 }
 export function Access({children}:{children:ReactNode}){
+ const {pathname}=useLocation()
  const [session,setSession]=useState<Session|null|undefined>(undefined),[recover,setRecover]=useState(false)
  const [tokenCallback]=useState(()=>new URLSearchParams(location.search).has('token_hash')||/[#&?]error(?:_code)?=/.test(location.href))
  useEffect(()=>{if(!db)return;const {data}=db.auth.onAuthStateChange((event,s)=>{setSession(s);if(event==='PASSWORD_RECOVERY')setRecover(true)});return ()=>data.subscription.unsubscribe()},[])
+ useEffect(()=>{
+  if(pathname==='/login'||pathname==='/signup'){
+   document.title=(pathname==='/signup'?'Create account':'Log in')+' | InvoiceEye'
+  }
+ },[pathname])
+ if(!db&&pathname==='/')return <Landing/>
  if(!db)return <Frame>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to connect InvoiceEye.</Frame>
  if(session===undefined)return <Frame>Loading session…</Frame>
  if(recover)return <Frame><AuthForms initial="recovery"/></Frame>
@@ -50,7 +59,9 @@ export function Access({children}:{children:ReactNode}){
  if(!reset&&!tokenCallback&&session?.user.email_confirmed_at){return <Frame><h2>Email verified</h2><a href="/">Continue to InvoiceEye</a></Frame>}
  return <Frame><EmailCallback recovery={reset} onVerified={()=>reset?setRecover(true):location.replace('/')}/></Frame>
  }
- if(!session)return <Frame><AuthForms/></Frame>
+ if(!session&&pathname==='/')return <Landing/>
+ if(!session)return <Frame><AuthForms key={pathname} initial={pathname==='/signup'?'signup':'login'}/></Frame>
  if(!session.user.email_confirmed_at)return <Frame><h2>Verify your email</h2><p>Use your confirmation link before opening the workspace.</p><SignOut/></Frame>
+ if(pathname==='/login'||pathname==='/signup')return <Navigate to="/" replace/>
  return <Identity.Provider value={session.user}><Membership key={session.user.id} user={session.user.id}>{children}</Membership></Identity.Provider>
 }
