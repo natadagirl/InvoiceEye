@@ -14,29 +14,35 @@ import {
 } from '../../supabase/functions/extract-invoice/format'
 
 import { ReviewSelector } from './ReviewSelector'
-import { existingSupplier, type IngredientOption, matchIngredient } from '../services/invoiceMatching'
+import {
+  existingSupplier,
+  type IngredientOption,
+  matchIngredient,
+  proposeIngredient,
+  supportedBaseUnit,
+  validIngredientName,
+} from '../services/invoiceMatching'
 import './review.css'
 
 type Product = IngredientOption
 type ReviewLine = { key: string; automatic?: string; open: boolean }
+const CREATE_INGREDIENT = ':new-ingredient'
 function prepareDraft(draft: Draft, products: Product[]) {
-  const lines = draft.items.map((item, index) => {
-    const automatic = item.ingredientId === undefined
-      ? matchIngredient(item.name, item.packageUnit, products).automatic?.id
-      : undefined
-    return {
-      key: crypto.randomUUID(),
-      automatic,
-      open: !(automatic ?? item.ingredientId) || lineProblems(item, index).length > 0,
-    }
-  })
+  const matches = draft.items.map((item) => matchIngredient(item.name, item.packageUnit, products))
   return {
-    lines,
+    lines: draft.items.map((item, index) => {
+      const automatic = item.ingredientKind === 'charge' ? undefined : matches[index].automatic?.id
+      return { key: crypto.randomUUID(), automatic, open: !automatic || lineProblems(item, index).length > 0 }
+    }),
     draft: {
       ...draft,
-      items: draft.items.map((item, index) =>
-        lines[index].automatic ? { ...item, ingredientId: lines[index].automatic } : item
-      ),
+      items: draft.items.map((item, index) => {
+        if (item.ingredientKind !== 'charge' && matches[index].automatic) {
+          return { ...item, ingredientId: matches[index].automatic.id }
+        }
+        const proposed = proposeIngredient(item, matches[index])
+        return proposed ? { ...item, newIngredientName: proposed } : item
+      }),
     },
   }
 }
@@ -212,6 +218,12 @@ export function Review({ id, path, onClose }: Props) {
   }
   const issues = problems(draft)
   draft.items.forEach((item, index) => {
+    if (
+      item.newIngredientName !== undefined &&
+      (!validIngredientName(item.newIngredientName) || !supportedBaseUnit(item.packageUnit))
+    ) {
+      issues.push('Enter an ingredient name and a base unit of kg, L or each on row ' + (index + 1) + '.')
+    }
     const matched = products.find((p) => p.id === item.ingredientId)
     if (matched && matched.base_unit !== item.packageUnit) {
       issues.push(
@@ -333,12 +345,22 @@ export function Review({ id, path, onClose }: Props) {
                     ? 'Suggested match'
                     : undefined,
                 })).sort((a, b) => Number(Boolean(b.note)) - Number(Boolean(a.note)))
+                const pending = item.newIngredientName !== undefined
+                if (item.ingredientKind !== 'charge') {
+                  options.push({
+                    value: CREATE_INGREDIENT,
+                    label: 'Create new ingredient' + (item.name?.trim() ? ': ' + item.name.trim() : ''),
+                    note: 'Saved only when the invoice is confirmed',
+                  })
+                }
                 const warnings = lineProblems(item, index)
                 if (match && match.base_unit !== item.packageUnit) {
                   warnings.push('Pack size must use ' + match.base_unit + ' for ' + match.name + '.')
                 }
                 const matchingStatus = match
                   ? item.ingredientId === state.automatic ? 'Automatic match' : 'Selected match'
+                  : pending
+                  ? 'New ingredient on confirmation'
                   : suggestedIds.size
                   ? 'Suggested match available'
                   : 'Unmatched'
@@ -377,16 +399,44 @@ export function Review({ id, path, onClose }: Props) {
                         </label>
                         <ReviewSelector
                           label={'Ingredient match row ' + (index + 1)}
-                          selected={match ? match.name + ' · ' + match.specification : 'Leave unmatched'}
+                          selected={match
+                            ? match.name + ' · ' + match.specification
+                            : pending
+                            ? 'Create new ingredient: ' + item.newIngredientName
+                            : 'Leave unmatched'}
                           options={options}
                           alternative={{ value: '', label: 'Leave unmatched' }}
                           onSelect={(value) => {
                             setLines((current) =>
                               current.map((row) => row.key === state.key ? { ...row, automatic: undefined } : row)
                             )
-                            line(index, { ingredientId: value })
+                            line(
+                              index,
+                              value === CREATE_INGREDIENT
+                                ? {
+                                  ingredientId: undefined,
+                                  newIngredientName: item.newIngredientName ?? item.name?.trim() ?? '',
+                                }
+                                : { ingredientId: value, newIngredientName: undefined },
+                            )
                           }}
                         />
+                        {pending && (
+                          <div className='invoiceTotalField'>
+                            <label>
+                              New ingredient name
+                              <input
+                                maxLength={100}
+                                value={item.newIngredientName}
+                                onChange={(event) => line(index, { newIngredientName: event.target.value })}
+                              />
+                            </label>
+                            <small>
+                              Saved when you confirm. An equivalent ingredient with the same base unit will be
+                              reused.
+                            </small>
+                          </div>
+                        )}
                         <label>
                           Description<textarea
                             rows={2}

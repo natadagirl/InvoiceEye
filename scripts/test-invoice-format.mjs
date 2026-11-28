@@ -32,3 +32,7 @@ assert.equal(match('Roma Tomatoes','kg',[roma,product('second','Roma Tomatoes','
 assert.equal(existingSupplier('  prairie fresh  ',['Prairie Fresh']),'Prairie Fresh')
 assert.equal(existingSupplier('Other',[]),undefined)
 console.log('Passed exact, equivalent, ambiguous and incompatible ingredient matching, supplier reuse, and actionable validation.')
+
+assert.ok(isDraft({...draft,items:[{...draft.items[0],ingredientKind:'food'}]}))
+assert.equal(isDraft({...draft,items:[{...draft.items[0],ingredientKind:'unknown'}]}),false)
+assert.equal(isDraft({...draft,items:[{...draft.items[0],newIngredientName:'Injected'}]}),false)

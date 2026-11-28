@@ -56,6 +56,16 @@ const session = {
 try {
   for (const width of [1440, 1280, 1024, 390, 375]) {
     const page = await browser.newPage({ viewport: { width, height: 860 }, hasTouch: width < 500 })
+    const fresh = width === 375
+    const extracted = fresh
+      ? {
+        ...draft,
+        items: [
+          { ...line, name: 'Bell Pepper', ingredientKind: 'food' },
+          { ...line, name: 'Item 238', ingredientKind: 'uncertain' },
+        ],
+      }
+      : draft
     let confirmations = 0, extractionAttempts = 0
     await page.route('**/auth/v1/**', (route) => route.fulfill({ json: session }))
     await page.route('**/rest/v1/**', async (route) => {
@@ -64,8 +74,15 @@ try {
         const body = request.postDataJSON()
         assert.equal(body.iid, iid)
         assert.equal(body.draft.supplier, width === 375 ? 'New Test Produce' : 'Cedar Valley Produce')
-        assert.equal(body.draft.items[0].ingredientId, roma)
-        assert.equal(body.draft.items[1].ingredientId, carrots)
+        if (fresh) {
+          assert.equal(body.draft.items[0].newIngredientName, 'Red Bell Pepper')
+          assert.equal(body.draft.items[0].name, 'Bell Pepper')
+          assert.equal(body.draft.items[1].ingredientId, '')
+          assert.equal(body.draft.items[1].newIngredientName, undefined)
+        } else {
+          assert.equal(body.draft.items[0].ingredientId, roma)
+          assert.equal(body.draft.items[1].ingredientId, carrots)
+        }
         assert.equal(body.draft.discounts, 0)
         confirmations++
         return route.fulfill({ json: iid })
@@ -83,7 +100,7 @@ try {
         data = url.searchParams.has('id')
           ? (url.searchParams.get('select') === 'processing_status'
             ? { processing_status: status }
-            : { processing_status: status, extraction: draft, extraction_error: null })
+            : { processing_status: status, extraction: extracted, extraction_error: null })
           : (url.searchParams.get('offset') === '0' || request.headers().range?.startsWith('0-'))
           ? [{
             id: iid,
@@ -98,7 +115,7 @@ try {
           }]
           : []
       }
-      if (table === 'ingredients') {
+      if (table === 'ingredients' && !fresh) {
         data = [
           { id: roma, name: 'Roma Tomatoes', specification: 'Standard', base_unit: 'kg' },
           { id: carrots, name: 'Carrots', specification: 'Standard', base_unit: 'kg' },
@@ -132,8 +149,14 @@ try {
     assert.equal(await modal.getByLabel('Invoice date').inputValue(), draft.date)
     assert.equal(await modal.getByLabel('Discounts').inputValue(), '0.00')
     assert.equal(await modal.locator('.reviewNotes').count(), 0)
-    await modal.locator('.reviewLineSummary').nth(0).getByText('Line 1 · Automatic match').waitFor()
-    assert.equal(await modal.locator('.reviewLineSummary').nth(0).getAttribute('aria-expanded'), 'false')
+    if (fresh) {
+      const name = modal.getByLabel('New ingredient name')
+      assert.equal(await name.inputValue(), 'Bell Pepper')
+      await name.fill('Red Bell Pepper')
+    } else {
+      await modal.locator('.reviewLineSummary').nth(0).getByText('Line 1 · Automatic match').waitFor()
+      assert.equal(await modal.locator('.reviewLineSummary').nth(0).getAttribute('aria-expanded'), 'false')
+    }
     assert.equal(await modal.locator('.reviewLineSummary').nth(1).getAttribute('aria-expanded'), 'true')
     const vendor = modal.getByRole('button', { name: 'Supplier ' + longSupplier })
     if (process.env.SCREENSHOT_DIR && [1440, 390].includes(width)) {
@@ -170,9 +193,13 @@ try {
     }
     const ingredient = modal.getByRole('button', { name: 'Ingredient match row 2 Leave unmatched' })
     await ingredient.click()
-    const ingredients = modal.getByRole('textbox', { name: 'Search ingredient match row 2' })
-    await ingredients.fill('carrot')
-    await modal.getByRole('button', { name: /Carrots.*Suggested match/ }).click()
+    if (fresh) {
+      await modal.getByRole('button', { name: 'Leave unmatched', exact: true }).click()
+    } else {
+      const ingredients = modal.getByRole('textbox', { name: 'Search ingredient match row 2' })
+      await ingredients.fill('carrot')
+      await modal.getByRole('button', { name: /Carrots.*Suggested match/ }).click()
+    }
     await modal.getByRole('button', { name: 'Collapse all' }).click()
     assert.equal(await modal.locator('.reviewLineSummary[aria-expanded="true"]').count(), 0)
     await modal.getByRole('button', { name: 'Expand all' }).click()

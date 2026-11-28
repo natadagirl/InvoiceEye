@@ -34,3 +34,28 @@ export function existingSupplier(input: string, suppliers: string[]) {
   const matches = suppliers.filter((option) => option.trim().toLowerCase() === name.toLowerCase())
   return matches.find((option) => option === name) ?? (matches.length === 1 ? matches[0] : undefined)
 }
+
+export function validIngredientName(name: string) {
+  return [...name.trim()].length <= 100 && /\p{L}/u.test(name)
+}
+
+export function supportedBaseUnit(unit: string | null) {
+  return unit === 'kg' || unit === 'L' || unit === 'each'
+}
+
+export function proposeIngredient(
+  item: { name: string | null; packageUnit: string | null; packageSize: number | null; ingredientKind?: string },
+  match: ReturnType<typeof matchIngredient>,
+) {
+  const name = item.name?.trim()
+  if (
+    item.ingredientKind !== 'food' || !name || !validIngredientName(name) ||
+    !supportedBaseUnit(item.packageUnit) ||
+    !item.packageSize || item.packageSize <= 0 || match.automatic || match.suggested.length
+  ) return undefined
+  if (
+    /\b(fee|charge|shipping|delivery|deposit|surcharge|discount|rebate|freight|credit|handling|miscellaneous)\b/i
+      .test(name)
+  ) return undefined
+  return name
+}

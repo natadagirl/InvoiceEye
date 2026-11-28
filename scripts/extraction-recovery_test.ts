@@ -1,6 +1,6 @@
 // Isolated transport test. No real account, credentials, network or model calls.
 import {extractInvoice} from '../supabase/functions/extract-invoice/handler.ts'
-import {emptyDraft} from '../supabase/functions/extract-invoice/format.ts'
+import {emptyDraft,isDraft} from '../supabase/functions/extract-invoice/format.ts'
 Deno.test('bounded retries, permanent errors, duplicate protection and failed lease recovery',async()=>{
  const realFetch=globalThis.fetch
  const invoice='01234567-89ab-4cde-8989-0123456789ef'
@@ -16,7 +16,7 @@ Deno.test('bounded retries, permanent errors, duplicate protection and failed le
    requests++
    const status=results.shift()
    if(status)return Response.json({}, {status,headers:retryAfter?{'Retry-After':retryAfter}:undefined})
-   return Response.json({candidates:[{content:{parts:[{text:JSON.stringify(emptyDraft())}]}}]})
+   return Response.json({candidates:[{content:{parts:[{text:JSON.stringify({...emptyDraft(),items:[{...emptyDraft().items[0],name:'Bell Pepper',ingredientKind:'food'}]})}]}}]})
   }
   if(url.pathname.startsWith('/auth/'))return Response.json({id:invoice})
   if(url.pathname.endsWith('/invoices'))return Response.json({restaurant_id:invoice,original_file_path:invoice+'/'+invoice+'.pdf',processing_status:'uploaded'})
@@ -30,6 +30,9 @@ Deno.test('bounded retries, permanent errors, duplicate protection and failed le
   }
   if(url.pathname.endsWith('/finish_invoice_extraction')){
    const body=JSON.parse(String(init?.body))
+   if(!body.failure&&(!isDraft(body.result)||body.result.items[0]?.ingredientKind!=='food')){
+    throw new Error('Extraction did not preserve the classification')
+   }
    states.push(body.failure?'failed':'awaiting_review')
    return Response.json(true)
   }

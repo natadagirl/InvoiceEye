@@ -157,3 +157,11 @@ Invoice review searches the current restaurant's supplier and ingredient lists i
 Extraction retries transient provider failures at most twice within a 75-second generation budget. The same invoice lease covers every attempt. Rate-limit responses are retried only when the provider supplies a usable Retry-After value within that budget. Failed extraction retains the upload and the review screen retains unsaved edits after an unsuccessful retry. The model selection and database confirmation safeguards are unchanged.
 
 Run `npm test`, the Deno extraction recovery test, and `scripts/check-review-browser.mjs` to exercise matching, review and recovery. The Chrome script uses the local app, a locally installed Playwright module, and intercepted synthetic backend responses. Set `PLAYWRIGHT_MODULE`, `CHROME_BIN`, and optionally `SCREENSHOT_DIR`. Its default local origin is `http://127.0.0.1:5242`.
+
+### Starting an ingredient catalog
+
+Invoice review proposes **Create new ingredient** for a clearly identified food line with a known pack size and supported base unit when the current catalog has no suitable match. Reviewers can edit the proposed name, select an existing ingredient, or leave the line unmatched. Older drafts and uncertain classifications can be reviewed manually. Confirmed unmatched lines still count toward invoice spend.
+
+Migration `20261127000100_confirm_invoice_ingredients.sql` keeps ingredient creation, the invoice header, and its lines in the same transaction. The confirmation RPC serializes catalog creation per restaurant, reuses one equivalent same-unit entry, and requires an explicit match when multiple entries qualify. Existing supplier creation stays in that transaction. The next review retrieves the current catalog.
+
+Run `scripts/check-fresh-catalog.mjs` with `PGLITE_MODULE` pointing to a temporary `@electric-sql/pglite` install. This exercises the SQL in an isolated database with synthetic Supabase Auth and Storage interfaces and simulated extraction responses. Deployment requires the migration, then the updated `extract-invoice` function and frontend. Previously confirmed unmatched lines are outside this change.
