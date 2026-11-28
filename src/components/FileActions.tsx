@@ -17,7 +17,7 @@ export function Upload(){
    setReview({id,path})
   }catch(e){setError(e instanceof Error?e.message:'Upload failed.')}finally{setBusy(false)}
  }
- return <><div className="uploadZone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(file)void upload(file)}}><label>Drop a PDF, JPEG or PNG here (up to 10 MiB), or {busy?'Uploading…':'Upload an invoice'} <input type="file" accept=".pdf,.jpg,.jpeg,.png" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void upload(file)}}/></label>{error&&<p role="alert">{error}</p>}</div><div className="samples">Synthetic samples: <a download href="/samples/normal.pdf">Standard PDF</a> · <a download href="/samples/increase.png">Price increase PNG</a> · <a download href="/samples/incomplete.jpg">Incomplete JPEG</a></div>{review&&<Review {...review} onClose={()=>{setReview(null);refresh()}}/>}</>
+ return <><div className="uploadZone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const file=e.dataTransfer.files[0];if(file)void upload(file)}}><label>Drop a PDF, JPEG or PNG here (up to 10 MiB), or {busy?'Uploading…':'Upload an invoice'} <input type="file" accept=".pdf,.jpg,.jpeg,.png" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)void upload(file)}}/></label>{error&&<p role="alert">{error}</p>}</div>{review&&<Review {...review} onClose={()=>{setReview(null);refresh()}}/>}</>
 }
 export function FileActions({path}:{path:string}){
  const {refresh}=useWorkspace(),[error,setError]=useState(''),[busy,setBusy]=useState(false)

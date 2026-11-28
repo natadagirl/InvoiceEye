@@ -55,7 +55,7 @@ Review each header, add or remove lines and correct uncertain values against the
 
 PostgreSQL locks the invoice and commits the supplier, header and all line items in one transaction. It checks line totals, their sum against the **pre-discount** subtotal, and subtotal less discounts plus tax against the total. It derives normalized unit prices and enforces tenant-specific file content and supplier/invoice identity uniqueness. Failed saves leave the draft available for correction. The prototype supports nonnegative purchases and one header discount; credit notes and more complex tax/discount structures need further modeling. Edited values are saved on confirmation; closing the editor retains the original extracted draft.
 
-The sample downloads on Invoices are fictional Cedar Valley Produce deliveries to Juniper Kitchen: a normal PDF (CAD 103.80), a price-increase PNG (CAD 150.50) and an incomplete JPEG (CAD 157.14) with an unspecified pack and ambiguous tomato variety.
+Local extraction fixtures under `scripts/fixtures/invoices/` contain fictional Cedar Valley Produce deliveries. The production site does not publish these files.
 
 ### Operations and checks
 
@@ -148,7 +148,7 @@ The production Confirm signup and Reset password HTML is recorded in `supabase/t
 
 The root route shows the public landing page to signed-out visitors and opens the dashboard for authenticated users. `/login` and `/signup` enter the existing Auth form, while protected deep links retain their inline sign-in behavior. Confirmation and recovery keep their existing routes.
 
-The landing hero is a static illustration with sample data. The showcase image was captured from the authorized Juniper Kitchen synthetic dashboard, cropped to the dashboard content, and exported as WebP. Public visitors do not query restaurant records. A future product video can be added near the showcase when footage is available.
+The public landing page presents the product workflow and links to sign-up and login. A product video can be added when footage is available.
 
 ### Invoice review matching and retries
 

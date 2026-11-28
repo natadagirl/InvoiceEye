@@ -5,8 +5,8 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const origin = process.env.TEST_ORIGIN || 'http://127.0.0.1:5242'
 assert.ok(['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME_BIN })
-const pdf = await readFile(new URL('../public/samples/normal.pdf', import.meta.url))
-const image = await readFile(new URL('../public/samples/increase.png', import.meta.url))
+const pdf = await readFile(new URL('../scripts/fixtures/invoices/normal.pdf', import.meta.url))
+const image = await readFile(new URL('../scripts/fixtures/invoices/increase.png', import.meta.url))
 const longSupplier = 'Prairie Fresh Produce and Distinctive Specialty Food Distributors'
 const longNumber = 'PF-DISTRIBUTION-2026-11-00008471'
 const rid = crypto.randomUUID(), iid = crypto.randomUUID(), uid = crypto.randomUUID()

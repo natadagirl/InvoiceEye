@@ -22,7 +22,7 @@ async function upload(bytes,ext,type){
 }
 const financial=async()=>analytics(ok(await qa.from('invoices').select('invoice_date,total_amount,processing_status,currency').eq('restaurant_id',rid)).map(i=>({date:i.invoice_date,amount:i.total_amount,status:i.processing_status,currency:i.currency}))).monthlySpend('2026-12')
 for(const [file,type,amount] of [['normal.pdf','application/pdf',103.8],['increase.png','image/png',150.5]]){
- const bytes=readFileSync('public/samples/'+file),hash=createHash('sha256').update(bytes).digest('hex')
+ const bytes=readFileSync('scripts/fixtures/invoices/'+file),hash=createHash('sha256').update(bytes).digest('hex')
  const existing=ok(await qa.from('invoices').select('id,extraction,extraction_model,processing_status').eq('restaurant_id',rid).eq('file_hash',hash).neq('processing_status','discarded').maybeSingle())
  const id=existing?.id??await upload(bytes,file.split('.')[1],type)
  const before=await financial()
@@ -64,7 +64,7 @@ for(const [file,type,amount] of [['normal.pdf','application/pdf',103.8],['increa
 }
 console.log('Passed tenant denial, duplicate hash, atomic rollback, idempotent confirmation, normalized prices and confirmed-only dashboard spend.')
 // This sample tests an intentionally absent pack size. Leave it available for human review.
-const jpeg=readFileSync('public/samples/incomplete.jpg')
+const jpeg=readFileSync('scripts/fixtures/invoices/incomplete.jpg')
 const existingJpeg=ok(await qa.from('invoices').select('id,extraction,extraction_model').eq('restaurant_id',rid).eq('file_hash',createHash('sha256').update(jpeg).digest('hex')).neq('processing_status','discarded').maybeSingle())
 const jid=existingJpeg?.id??await upload(jpeg,'jpg','image/jpeg')
 const extraction=existingJpeg?.extraction?{draft:existingJpeg.extraction,model:existingJpeg.extraction_model}:await request(qa,jid)
