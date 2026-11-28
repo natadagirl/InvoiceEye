@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, ArrowRight, ChartNoAxesCombined, Lightbulb, Menu, MessagesSquare, ScanLine, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, ChartNoAxesCombined, Check, Lightbulb, Menu, MessagesSquare, ScanLine, X } from 'lucide-react'
 import { Brand } from '../components/Brand'
 import './landing.css'
 
@@ -19,6 +19,26 @@ const steps = [
 ]
 
 const title = 'InvoiceEye — Less paperwork. Smarter purchasing.'
+
+function DashboardPreview() {
+  return (
+    <div className="landing-preview" aria-label="Dashboard preview with synthetic sample data">
+      <div className="landing-preview-head"><strong>Purchasing overview</strong><span>Sample data</span></div>
+      <p className="landing-metric-label">Monthly purchasing expenditure</p>
+      <strong className="landing-metric">CA$12,455.09</strong>
+      <div className="landing-chart" role="img" aria-label="Sample expenditure trend rising from June to November">
+        <svg viewBox="0 0 480 152" preserveAspectRatio="none" aria-hidden="true">
+          <path className="landing-gridlines" d="M0 20H480 M0 60H480 M0 100H480 M0 140H480" />
+          <path className="landing-area" d="M0 113 C34 109 67 78 96 86 S157 114 192 95 S250 45 288 54 S354 83 384 62 S440 28 480 20 V152 H0Z" />
+          <path className="landing-series" d="M0 113 C34 109 67 78 96 86 S157 114 192 95 S250 45 288 54 S354 83 384 62 S440 28 480 20" />
+        </svg>
+        <div className="landing-months">{['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'].map(month => <span key={month}>{month}</span>)}</div>
+      </div>
+      <div className="landing-alert"><span>INGREDIENT PRICE ALERT</span><strong>Roma tomatoes <b>+18.0%</b></strong></div>
+      <div className="landing-insight"><Lightbulb size={19} aria-hidden="true" /><div><strong>AI insight</strong><p>Review the latest tomato price against prior purchases before your next order.</p></div></div>
+    </div>
+  )
+}
 
 export function Landing() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -60,6 +80,7 @@ export function Landing() {
               <a className="landing-button landing-outline" href="#features">Explore features <ArrowDown size={17} aria-hidden="true" /></a>
             </div>
           </div>
+          <DashboardPreview />
         </section>
 
         <section className="landing-section landing-features" id="features">
@@ -73,6 +94,16 @@ export function Landing() {
                 </article>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="landing-section landing-showcase">
+          <div className="landing-wrap">
+            <h2>See your purchasing costs more clearly.</h2>
+            <figure>
+              <img src="/marketing/dashboard.webp" width={1214} height={682} alt="InvoiceEye dashboard showing confirmed purchases, spending trends and price increases from synthetic invoices" loading="lazy" />
+              <figcaption><Check size={16} aria-hidden="true" /> InvoiceEye dashboard with synthetic demonstration data</figcaption>
+            </figure>
           </div>
         </section>
 

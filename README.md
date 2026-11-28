@@ -148,7 +148,7 @@ The production Confirm signup and Reset password HTML is recorded in `supabase/t
 
 The root route shows the public landing page to signed-out visitors and opens the dashboard for authenticated users. `/login` and `/signup` enter the existing Auth form, while protected deep links retain their inline sign-in behavior. Confirmation and recovery keep their existing routes.
 
-The public landing page presents the product workflow and links to sign-up and login. A product video can be added when footage is available.
+The landing page illustrates the product with a sample-data preview and a screenshot of the synthetic Juniper Kitchen dashboard. Public visitors do not query restaurant records. A product video can be added when footage is available.
 
 ### Invoice review matching and retries
 
